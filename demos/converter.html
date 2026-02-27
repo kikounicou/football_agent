@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLASICO Unit Converter ⚽</title>
+<style>
+/* ═══════════════════════ RESET & BASE ═══════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+    min-height:100vh;
+    background:#1a1a2e;
+    font-family:'Segoe UI',system-ui,sans-serif;
+    color:#eee;
+    display:flex;flex-direction:column;align-items:center;
+    padding:20px;
+    overflow-x:hidden;
+}
+
+/* ═══════════════════════ ANIMATED BACKGROUND ═══════════════════════ */
+body::before{
+    content:'';position:fixed;top:0;left:0;right:0;bottom:0;z-index:0;
+    background:
+        radial-gradient(ellipse 600px 400px at 20% 30%, rgba(228,0,43,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 350px at 80% 70%, rgba(128,0,128,0.05) 0%, transparent 70%),
+        radial-gradient(ellipse 800px 600px at 50% 50%, rgba(228,0,43,0.03) 0%, transparent 70%);
+    animation: bgPulse 8s ease-in-out infinite alternate;
+    pointer-events:none;
+}
+@keyframes bgPulse{
+    0%{opacity:0.6;transform:scale(1)}
+    100%{opacity:1;transform:scale(1.05)}
+}
+
+/* ═══════════════════════ HEADER ═══════════════════════ */
+.header{
+    position:relative;z-index:1;
+    text-align:center;
+    margin-bottom:30px;
+    animation: slideDown 0.6s ease-out;
+}
+@keyframes slideDown{
+    from{opacity:0;transform:translateY(-30px)}
+    to{opacity:1;transform:translateY(0)}
+}
+.header h1{
+    font-size:2.4rem;font-weight:800;letter-spacing:2px;
+    text-transform:uppercase;
+    background:linear-gradient(135deg, #E4002B 0%, #ff4d6d 40%, #fff 50%, #ff4d6d 60%, #E4002B 100%);
+    background-size:200% auto;
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    animation: shimmer 3s linear infinite;
+}
+@keyframes shimmer{
+    to{background-position:200% center}
+}
+.header p{
+    margin-top:8px;font-size:0.95rem;color:#888;letter-spacing:1px;
+}
+
+/* ═══════════════════════ CONVERTER CARD ═══════════════════════ */
+.converter-card{
+    position:relative;z-index:1;
+    background:linear-gradient(145deg, #16213e 0%, #1a1a2e 100%);
+    border:1px solid rgba(228,0,43,0.3);
+    border-radius:16px;
+    padding:32px;
+    width:100%;max-width:560px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4), 0 0 60px rgba(228,0,43,0.06);
+    animation: fadeIn 0.8s ease-out 0.2s both;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+.converter-card:hover{
+    border-color:rgba(228,0,43,0.5);
+    box-shadow:0 8px 32px rgba(0,0,0,0.4), 0 0 80px rgba(228,0,43,0.1);
+}
+@keyframes fadeIn{
+    from{opacity:0;transform:translateY(20px)}
+    to{opacity:1;transform:translateY(0)}
+}
+
+/* ═══════════════════════ CATEGORY SELECTOR ═══════════════════════ */
+.category-section{margin-bottom:24px;text-align:center}
+.category-section label{
+    display:block;font-size:0.85rem;color:#999;text-transform:uppercase;
+    letter-spacing:2px;margin-bottom:10px;
+}
+.category-select{
+    width:100%;padding:12px 16px;
+    background:#0d0d1a;color:#eee;
+    border:1px solid #333;border-radius:10px;
+    font-size:1rem;font-family:inherit;
+    cursor:pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23E4002B' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 16px center;
+}
+.category-select:focus{
+    outline:none;border-color:#E4002B;
+    box-shadow:0 0 12px rgba(228,0,43,0.2);
+}
+
+/* ═══════════════════════ INPUT ROWS ═══════════════════════ */
+.input-group{
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:16px;
+    animation: slideIn 0.5s ease-out both;
+}
+.input-group:nth-child(2){animation-delay:0.1s}
+.input-group:nth-child(3){animation-delay:0.2s}
+@keyframes slideIn{
+    from{opacity:0;transform:translateX(-20px)}
+    to{opacity:1;transform:translateX(0)}
+}
+.input-group input[type="number"]{
+    flex:1;padding:14px 16px;
+    background:#0d0d1a;color:#fff;
+    border:1px solid #333;border-radius:10px;
+    font-size:1.1rem;font-family:inherit;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+.input-group input[type="number"]:focus{
+    outline:none;border-color:#E4002B;
+    box-shadow:0 0 12px rgba(228,0,43,0.2);
+}
+.input-group input[type="number"]::-webkit-inner-spin-button,
+.input-group input[type="number"]::-webkit-outer-spin-button{
+    opacity:0.5;
+}
+.unit-select{
+    width:160px;padding:14px 12px;
+    background:#0d0d1a;color:#eee;
+    border:1px solid #333;border-radius:10px;
+    font-size:0.95rem;font-family:inherit;
+    cursor:pointer;
+    transition: border-color 0.3s;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23888' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+}
+.unit-select:focus{
+    outline:none;border-color:#E4002B;
+}
+
+/* ═══════════════════════ SWAP BUTTON ═══════════════════════ */
+.swap-row{
+    display:flex;justify-content:center;
+    margin-bottom:16px;
+}
+.swap-btn{
+    width:44px;height:44px;
+    background:linear-gradient(135deg, #E4002B, #b8001f);
+    border:none;border-radius:50%;
+    color:#fff;font-size:1.2rem;
+    cursor:pointer;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s;
+    box-shadow:0 2px 12px rgba(228,0,43,0.3);
+    display:flex;align-items:center;justify-content:center;
+}
+.swap-btn:hover{
+    transform:rotate(180deg) scale(1.1);
+    box-shadow:0 4px 20px rgba(228,0,43,0.5);
+}
+.swap-btn:active{
+    transform:rotate(180deg) scale(0.95);
+}
+
+/* ═══════════════════════ RESULT DISPLAY ═══════════════════════ */
+.result-box{
+    background:linear-gradient(135deg, rgba(228,0,43,0.1) 0%, rgba(228,0,43,0.03) 100%);
+    border:1px solid rgba(228,0,43,0.2);
+    border-radius:12px;
+    padding:20px;
+    text-align:center;
+    margin-top:8px;
+    transition: all 0.4s ease;
+}
+.result-box.flash{
+    animation: resultFlash 0.5s ease;
+}
+@keyframes resultFlash{
+    0%{border-color:rgba(228,0,43,0.2)}
+    50%{border-color:rgba(228,0,43,0.8);box-shadow:0 0 20px rgba(228,0,43,0.3)}
+    100%{border-color:rgba(228,0,43,0.2)}
+}
+.result-formula{
+    font-size:0.85rem;color:#888;margin-bottom:8px;
+    font-family:'Courier New',monospace;
+}
+.result-value{
+    font-size:1.8rem;font-weight:700;
+    color:#E4002B;
+    transition: transform 0.3s;
+}
+.result-value.pop{
+    animation: popIn 0.3s ease;
+}
+@keyframes popIn{
+    0%{transform:scale(0.8);opacity:0.5}
+    60%{transform:scale(1.1)}
+    100%{transform:scale(1);opacity:1}
+}
+
+/* ═══════════════════════ EASTER EGG BOX ═══════════════════════ */
+.easter-egg{
+    margin-top:16px;
+    padding:14px 18px;
+    background:rgba(255,255,255,0.03);
+    border-left:3px solid #E4002B;
+    border-radius:0 8px 8px 0;
+    font-size:0.9rem;
+    color:#ccc;
+    line-height:1.5;
+    opacity:0;
+    transform:translateY(10px);
+    transition: opacity 0.4s, transform 0.4s;
+}
+.easter-egg.visible{
+    opacity:1;
+    transform:translateY(0);
+}
+.easter-egg .emoji{font-size:1.1rem;margin-right:6px}
+
+/* ═══════════════════════ FUN FACTS ═══════════════════════ */
+.fun-facts{
+    position:relative;z-index:1;
+    margin-top:24px;
+    width:100%;max-width:560px;
+    animation: fadeIn 0.8s ease-out 0.5s both;
+}
+.fun-facts h3{
+    font-size:0.85rem;color:#666;text-transform:uppercase;
+    letter-spacing:2px;margin-bottom:12px;text-align:center;
+}
+.facts-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+.fact-card{
+    background:linear-gradient(145deg, #16213e 0%, #0d0d1a 100%);
+    border:1px solid #222;border-radius:10px;
+    padding:14px;
+    font-size:0.82rem;color:#aaa;line-height:1.5;
+    transition: border-color 0.3s, transform 0.3s;
+    cursor:default;
+}
+.fact-card:hover{
+    border-color:rgba(228,0,43,0.4);
+    transform:translateY(-2px);
+}
+.fact-card strong{color:#E4002B;font-weight:600}
+
+/* ═══════════════════════ FOOTER ═══════════════════════ */
+.footer{
+    position:relative;z-index:1;
+    margin-top:auto;
+    padding-top:40px;padding-bottom:16px;
+    text-align:center;
+    font-size:0.8rem;color:#555;
+    letter-spacing:1px;
+    animation: fadeIn 1s ease-out 0.8s both;
+}
+
+/* ═══════════════════════ RESPONSIVE ═══════════════════════ */
+@media(max-width:600px){
+    body{padding:12px}
+    .header h1{font-size:1.6rem}
+    .converter-card{padding:20px}
+    .input-group{flex-direction:column;gap:8px}
+    .unit-select{width:100%}
+    .facts-grid{grid-template-columns:1fr}
+    .result-value{font-size:1.4rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<div class="header">
+    <h1>CLASICO Unit Converter ⚽</h1>
+    <p>Convertissez comme un pro du Standard de Liege</p>
+</div>
+
+<!-- ═══════════════════════ CONVERTER CARD ═══════════════════════ -->
+<div class="converter-card">
+
+    <!-- Category selector -->
+    <div class="category-section">
+        <label>Categorie</label>
+        <select id="category" class="category-select" onchange="onCategoryChange()">
+            <option value="length">📏 Longueur</option>
+            <option value="temperature">🌡️ Temperature</option>
+            <option value="weight">⚖️ Poids</option>
+            <option value="speed">💨 Vitesse</option>
+        </select>
+    </div>
+
+    <!-- From input -->
+    <div class="input-group">
+        <input type="number" id="fromValue" value="1" oninput="convert('from')" placeholder="Valeur...">
+        <select id="fromUnit" class="unit-select" onchange="convert('from')"></select>
+    </div>
+
+    <!-- Swap button -->
+    <div class="swap-row">
+        <button class="swap-btn" onclick="swapUnits()" title="Inverser les unites">⇅</button>
+    </div>
+
+    <!-- To input -->
+    <div class="input-group">
+        <input type="number" id="toValue" placeholder="Resultat..." oninput="convert('to')">
+        <select id="toUnit" class="unit-select" onchange="convert('from')"></select>
+    </div>
+
+    <!-- Result display -->
+    <div class="result-box" id="resultBox">
+        <div class="result-formula" id="resultFormula">1 m = 1 m</div>
+        <div class="result-value" id="resultValue">1</div>
+    </div>
+
+    <!-- Easter egg display -->
+    <div class="easter-egg" id="easterEgg"></div>
+</div>
+
+<!-- ═══════════════════════ FUN FACTS ═══════════════════════ -->
+<div class="fun-facts">
+    <h3>Le saviez-vous ? ⚽</h3>
+    <div class="facts-grid">
+        <div class="fact-card">
+            <strong>1 tacle de Witsel</strong> = 9 000 Newtons de puissance pure. Les tibias d'Anderlecht tremblent encore.
+        </div>
+        <div class="fact-card">
+            <strong>1 terrain de foot</strong> = 105 m de long. Le Standard le parcourt 2x plus vite qu'Anderlecht.
+        </div>
+        <div class="fact-card">
+            <strong>1 frappe de Dragus</strong> atteint 130 km/h. Meme le gardien d'Anderlecht applaudit.
+        </div>
+        <div class="fact-card">
+            <strong>Temperature a Sclessin</strong> : toujours brulante, meme par -10 C. L'Enfer existe, il est rouge.
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<div class="footer">
+    Another fine tool by Claude Code agents ⚽
+</div>
+
+<!-- ═══════════════════════ JAVASCRIPT ═══════════════════════ -->
+<script>
+/* ═══════════════════════ DATA ═══════════════════════ */
+const categories = {
+    length: {
+        name: 'Longueur',
+        units: {
+            m:       { label: 'Metres (m)',              factor: 1 },
+            km:      { label: 'Kilometres (km)',         factor: 1000 },
+            miles:   { label: 'Miles',                   factor: 1609.344 },
+            yards:   { label: 'Yards',                   factor: 0.9144 },
+            ft:      { label: 'Pieds (ft)',              factor: 0.3048 },
+            terrain: { label: 'Terrains de foot (105m)', factor: 105 },
+            witsel:  { label: 'Tacles de Witsel (2m)',   factor: 2 }
+        },
+        easterEggs: {
+            terrain: '⚽ Un terrain reglementaire fait 105 x 68 metres. Sclessin, la forteresse imprenable !',
+            witsel:  '💪 Un tacle de Witsel couvre 2 metres et genere 9 000 Newtons. Devastateur.',
+            miles:   '🇺🇸 Les Americains mesurent en miles... mais au Standard, on mesure en buts marques.',
+            yards:   '🏈 Le yard vient du football americain. Ici, on joue au VRAI football.',
+        }
+    },
+    temperature: {
+        name: 'Temperature',
+        units: {
+            celsius:    { label: 'Celsius (C)' },
+            fahrenheit: { label: 'Fahrenheit (F)' },
+            kelvin:     { label: 'Kelvin (K)' },
+            sclessin:   { label: 'Sclessin (bouillant)' }
+        },
+        easterEggs: {
+            sclessin:   '🔥 L\'Enfer de Sclessin : 1 Sclessin = le double de Celsius, parce que l\'ambiance est toujours brulante !',
+            kelvin:     '🧊 0 Kelvin = zero absolu. Comme le nombre de victoires d\'Anderlecht a Sclessin.',
+            fahrenheit: '🌡️ Fahrenheit, c\'est comme Anderlecht : inutilement complique et personne n\'en veut.',
+        }
+    },
+    weight: {
+        name: 'Poids',
+        units: {
+            kg:      { label: 'Kilogrammes (kg)', factor: 1 },
+            lbs:     { label: 'Livres (lbs)',     factor: 0.453592 },
+            g:       { label: 'Grammes (g)',       factor: 0.001 },
+            ballons: { label: 'Ballons (450g)',   factor: 0.45 },
+            coupes:  { label: 'Coupes du Standard (3kg)', factor: 3 }
+        },
+        easterEggs: {
+            ballons: '⚽ Un ballon officiel pese entre 410 et 450 grammes. Celui du Standard pese plus lourd... de victoires.',
+            coupes:  '🏆 Chaque coupe du Standard pese environ 3 kg de gloire pure. Anderlecht ne s\'en souvient plus.',
+            lbs:     '💪 Les livres, c\'est pour les halteres. Au Standard, on souleve des trophees.',
+        }
+    },
+    speed: {
+        name: 'Vitesse',
+        units: {
+            kmh:     { label: 'km/h',                 factor: 1 },
+            mph:     { label: 'mph (miles/h)',         factor: 1.60934 },
+            ms:      { label: 'm/s',                   factor: 3.6 },
+            witsel:  { label: 'Vitesse de Witsel',     factor: 32 },
+            dragus:  { label: 'Frappe de Dragus (130)', factor: 130 }
+        },
+        easterEggs: {
+            witsel:  '⚡ La vitesse de Witsel : 32 km/h en sprint. Les adversaires ne voient qu\'une ombre rouge.',
+            dragus:  '💥 Frappe de Dragus : 130 km/h ! Le filet a demande un arret maladie.',
+            mph:     '🇬🇧 Les Anglais utilisent les mph. On leur a quand meme pris la victoire en km/h.',
+            ms:      '🔬 Les m/s, c\'est pour les scientifiques. Au Standard, la science, c\'est marquer des buts.',
+        }
+    }
+};
+
+/* ═══════════════════════ STATE ═══════════════════════ */
+const $ = (id) => document.getElementById(id);
+let currentCategory = 'length';
+
+/* ═══════════════════════ INIT ═══════════════════════ */
+function init() {
+    onCategoryChange();
+}
+
+function onCategoryChange() {
+    currentCategory = $('category').value;
+    const cat = categories[currentCategory];
+    const unitKeys = Object.keys(cat.units);
+
+    populateSelect($('fromUnit'), cat.units, unitKeys[0]);
+    populateSelect($('toUnit'), cat.units, unitKeys.length > 1 ? unitKeys[1] : unitKeys[0]);
+
+    $('fromValue').value = 1;
+    convert('from');
+}
+
+function populateSelect(select, units, defaultKey) {
+    select.innerHTML = '';
+    for (const [key, unit] of Object.entries(units)) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = unit.label;
+        if (key === defaultKey) opt.selected = true;
+        select.appendChild(opt);
+    }
+}
+
+/* ═══════════════════════ CONVERSION ═══════════════════════ */
+function convert(direction) {
+    const cat = categories[currentCategory];
+    const fromUnit = $('fromUnit').value;
+    const toUnit = $('toUnit').value;
+
+    let fromVal, toVal;
+
+    if (currentCategory === 'temperature') {
+        if (direction === 'from') {
+            fromVal = parseFloat($('fromValue').value) || 0;
+            toVal = convertTemperature(fromVal, fromUnit, toUnit);
+            $('toValue').value = formatNumber(toVal);
+        } else {
+            toVal = parseFloat($('toValue').value) || 0;
+            fromVal = convertTemperature(toVal, toUnit, fromUnit);
+            $('fromValue').value = formatNumber(fromVal);
+        }
+    } else {
+        const fromFactor = cat.units[fromUnit].factor;
+        const toFactor = cat.units[toUnit].factor;
+
+        if (direction === 'from') {
+            fromVal = parseFloat($('fromValue').value) || 0;
+            // Convert: fromVal * fromFactor = base value, then / toFactor
+            toVal = (fromVal * fromFactor) / toFactor;
+            $('toValue').value = formatNumber(toVal);
+        } else {
+            toVal = parseFloat($('toValue').value) || 0;
+            fromVal = (toVal * toFactor) / fromFactor;
+            $('fromValue').value = formatNumber(fromVal);
+        }
+    }
+
+    // Update result display
+    const fromLabel = cat.units[fromUnit].label.split(' (')[0];
+    const toLabel = cat.units[toUnit].label.split(' (')[0];
+    const displayFrom = direction === 'from' ? ($('fromValue').value || '0') : formatNumber(fromVal);
+    const displayTo = direction === 'from' ? formatNumber(toVal) : ($('toValue').value || '0');
+
+    $('resultFormula').textContent = `${displayFrom} ${fromLabel} = ${displayTo} ${toLabel}`;
+    $('resultValue').textContent = displayTo;
+
+    // Animate result
+    $('resultValue').classList.remove('pop');
+    $('resultBox').classList.remove('flash');
+    void $('resultValue').offsetWidth; // force reflow
+    $('resultValue').classList.add('pop');
+    $('resultBox').classList.add('flash');
+
+    // Easter eggs
+    showEasterEgg(fromUnit, toUnit);
+}
+
+function convertTemperature(value, from, to) {
+    // First convert to Celsius as base
+    let celsius;
+    switch (from) {
+        case 'celsius':    celsius = value; break;
+        case 'fahrenheit': celsius = (value - 32) * 5 / 9; break;
+        case 'kelvin':     celsius = value - 273.15; break;
+        case 'sclessin':   celsius = value / 2; break; // Sclessin is always 2x hotter
+        default:           celsius = value;
+    }
+
+    // Then convert from Celsius to target
+    switch (to) {
+        case 'celsius':    return celsius;
+        case 'fahrenheit': return (celsius * 9 / 5) + 32;
+        case 'kelvin':     return celsius + 273.15;
+        case 'sclessin':   return celsius * 2; // Always hotter at Sclessin
+        default:           return celsius;
+    }
+}
+
+function formatNumber(n) {
+    if (Number.isNaN(n) || !Number.isFinite(n)) return '0';
+    // Up to 6 significant decimals, remove trailing zeros
+    const str = parseFloat(n.toPrecision(10)).toString();
+    // If it has too many decimals, limit to 6
+    if (str.includes('.') && str.split('.')[1].length > 6) {
+        return parseFloat(n.toFixed(6)).toString();
+    }
+    return str;
+}
+
+/* ═══════════════════════ SWAP ═══════════════════════ */
+function swapUnits() {
+    const fromUnit = $('fromUnit').value;
+    const toUnit = $('toUnit').value;
+    const fromVal = $('fromValue').value;
+    const toVal = $('toValue').value;
+
+    $('fromUnit').value = toUnit;
+    $('toUnit').value = fromUnit;
+    $('fromValue').value = toVal;
+    $('toValue').value = fromVal;
+
+    convert('from');
+}
+
+/* ═══════════════════════ EASTER EGGS ═══════════════════════ */
+function showEasterEgg(fromUnit, toUnit) {
+    const cat = categories[currentCategory];
+    if (!cat.easterEggs) {
+        $('easterEgg').classList.remove('visible');
+        return;
+    }
+
+    // Check if either unit has an easter egg
+    const egg = cat.easterEggs[toUnit] || cat.easterEggs[fromUnit];
+    const eggEl = $('easterEgg');
+
+    if (egg) {
+        eggEl.innerHTML = egg;
+        eggEl.classList.add('visible');
+    } else {
+        eggEl.classList.remove('visible');
+    }
+}
+
+/* ═══════════════════════ KEYBOARD SUPPORT ═══════════════════════ */
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab' && !e.shiftKey && document.activeElement === $('fromValue')) {
+        // Natural tab flow
+    }
+    // Swap shortcut: Ctrl+Shift+S
+    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        swapUnits();
+    }
+});
+
+/* ═══════════════════════ START ═══════════════════════ */
+init();
+</script>
+</body>
+</html>

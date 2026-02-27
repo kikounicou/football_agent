@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLASICO Match Timer</title>
+<style>
+/* ═══════════════════════ RESET & BASE ═══════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+    overflow-x:hidden;
+    background:#1a1a2e;
+    font-family:'Segoe UI',system-ui,sans-serif;
+    color:#eee;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
+
+/* ═══════════════════════ TITLE ═══════════════════════ */
+.title{
+    font-size:2rem;
+    font-weight:700;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+    margin-bottom:1rem;
+    text-align:center;
+    background:linear-gradient(135deg,#E4002B 0%,#ff4466 50%,#E4002B 100%);
+    background-size:200% 200%;
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+    animation:shimmer 3s ease-in-out infinite;
+}
+.title span{
+    display:block;
+    font-size:.75rem;
+    letter-spacing:.3em;
+    -webkit-text-fill-color:#888;
+    margin-top:.25rem;
+}
+@keyframes shimmer{
+    0%,100%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+}
+
+/* ═══════════════════════ DISPLAY PANEL ═══════════════════════ */
+.panel{
+    background:linear-gradient(180deg,#0d0d1a 0%,#12122a 100%);
+    border:2px solid #333;
+    border-radius:16px;
+    padding:2.5rem 3.5rem;
+    box-shadow:0 8px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+}
+.panel::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:3px;
+    background:linear-gradient(90deg,transparent,#E4002B,transparent);
+    opacity:.7;
+}
+
+/* ═══════════════════════ TIME DISPLAY ═══════════════════════ */
+.time-display{
+    font-size:5.5rem;
+    font-weight:200;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.05em;
+    color:#fff;
+    text-shadow:0 0 30px rgba(228,0,43,.3);
+    transition:text-shadow .3s ease;
+    line-height:1;
+    padding:.5rem 0;
+    font-family:'Consolas','Courier New',monospace;
+}
+.time-display.running{
+    text-shadow:0 0 40px rgba(228,0,43,.6), 0 0 80px rgba(228,0,43,.2);
+}
+.time-display .ms{
+    font-size:3rem;
+    color:#E4002B;
+    font-weight:300;
+}
+
+/* ═══════════════════════ STATUS INDICATOR ═══════════════════════ */
+.status{
+    font-size:.75rem;
+    letter-spacing:.25em;
+    text-transform:uppercase;
+    color:#555;
+    margin-top:.75rem;
+    height:1.2em;
+    transition:color .3s ease;
+}
+.status.active{color:#E4002B}
+.status-dot{
+    display:inline-block;
+    width:6px;height:6px;
+    border-radius:50%;
+    background:#555;
+    margin-right:.5em;
+    vertical-align:middle;
+    transition:background .3s ease;
+}
+.status.active .status-dot{
+    background:#E4002B;
+    box-shadow:0 0 8px #E4002B;
+    animation:pulse-dot 1s ease-in-out infinite;
+}
+@keyframes pulse-dot{
+    0%,100%{opacity:1}
+    50%{opacity:.4}
+}
+
+/* ═══════════════════════ BUTTONS ═══════════════════════ */
+.buttons{
+    display:flex;
+    gap:1rem;
+    margin-top:2rem;
+    justify-content:center;
+    flex-wrap:wrap;
+}
+.btn{
+    padding:.75rem 2rem;
+    border:2px solid #333;
+    border-radius:8px;
+    background:#1a1a2e;
+    color:#ccc;
+    font-family:inherit;
+    font-size:.9rem;
+    font-weight:600;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:all .2s ease;
+    position:relative;
+    overflow:hidden;
+    min-width:100px;
+}
+.btn::after{
+    content:'';
+    position:absolute;
+    top:50%;left:50%;
+    width:0;height:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.1);
+    transform:translate(-50%,-50%);
+    transition:width .4s ease, height .4s ease;
+}
+.btn:active::after{
+    width:300px;height:300px;
+}
+.btn:hover{
+    border-color:#555;
+    color:#fff;
+    transform:translateY(-2px);
+    box-shadow:0 4px 15px rgba(0,0,0,.3);
+}
+.btn:active{
+    transform:translateY(0);
+}
+
+/* -- Start button -- */
+.btn-start{
+    border-color:#E4002B;
+    color:#E4002B;
+    background:rgba(228,0,43,.08);
+}
+.btn-start:hover{
+    background:#E4002B;
+    color:#fff;
+    box-shadow:0 4px 20px rgba(228,0,43,.4);
+}
+
+/* -- Stop button -- */
+.btn-stop{
+    border-color:#ff6b00;
+    color:#ff6b00;
+    background:rgba(255,107,0,.08);
+}
+.btn-stop:hover{
+    background:#ff6b00;
+    color:#fff;
+    box-shadow:0 4px 20px rgba(255,107,0,.4);
+}
+
+/* -- Lap button -- */
+.btn-lap{
+    border-color:#00b4d8;
+    color:#00b4d8;
+    background:rgba(0,180,216,.08);
+}
+.btn-lap:hover{
+    background:#00b4d8;
+    color:#fff;
+    box-shadow:0 4px 20px rgba(0,180,216,.4);
+}
+
+/* -- Reset button -- */
+.btn-reset{
+    border-color:#555;
+    color:#888;
+}
+.btn-reset:hover{
+    border-color:#888;
+    color:#fff;
+    background:rgba(255,255,255,.05);
+}
+
+.btn:disabled{
+    opacity:.3;
+    cursor:not-allowed;
+    transform:none !important;
+    box-shadow:none !important;
+}
+
+/* ═══════════════════════ LAPS LIST ═══════════════════════ */
+.laps-container{
+    margin-top:2rem;
+    width:100%;
+    max-width:480px;
+    max-height:280px;
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color:#333 transparent;
+}
+.laps-container::-webkit-scrollbar{width:4px}
+.laps-container::-webkit-scrollbar-track{background:transparent}
+.laps-container::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+.laps-header{
+    font-size:.7rem;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:#555;
+    margin-bottom:.75rem;
+    padding-bottom:.5rem;
+    border-bottom:1px solid #222;
+}
+
+.lap-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:.5rem .75rem;
+    border-radius:6px;
+    font-variant-numeric:tabular-nums;
+    font-family:'Consolas','Courier New',monospace;
+    font-size:.85rem;
+    animation:lap-in .3s ease-out;
+    transition:background .2s ease;
+}
+.lap-item:hover{
+    background:rgba(255,255,255,.03);
+}
+.lap-item:nth-child(odd){
+    background:rgba(255,255,255,.02);
+}
+.lap-item .lap-num{
+    color:#555;
+    font-size:.75rem;
+    min-width:3rem;
+}
+.lap-item .lap-time{
+    color:#ccc;
+    flex:1;
+    text-align:center;
+}
+.lap-item .lap-delta{
+    color:#E4002B;
+    font-size:.8rem;
+    min-width:6rem;
+    text-align:right;
+}
+.lap-item.best .lap-time{color:#4ade80}
+.lap-item.worst .lap-time{color:#f87171}
+
+@keyframes lap-in{
+    from{opacity:0;transform:translateY(-10px)}
+    to{opacity:1;transform:translateY(0)}
+}
+
+/* ═══════════════════════ FOOTER ═══════════════════════ */
+.footer{
+    margin-top:2rem;
+    font-size:.7rem;
+    color:#444;
+    letter-spacing:.15em;
+    text-align:center;
+}
+
+/* ═══════════════════════ RESPONSIVE ═══════════════════════ */
+@media(max-width:600px){
+    .time-display{font-size:3.5rem}
+    .time-display .ms{font-size:2rem}
+    .panel{padding:1.5rem 1.5rem}
+    .title{font-size:1.4rem}
+    .btn{padding:.6rem 1.2rem;font-size:.8rem;min-width:80px}
+}
+</style>
+</head>
+<body>
+
+<h1 class="title">CLASICO Match Timer<span>Standard de Liege Chronometer</span></h1>
+
+<div class="panel">
+    <div class="time-display" id="display">00:00<span class="ms">.00</span></div>
+    <div class="status" id="status"><span class="status-dot"></span>Ready</div>
+
+    <div class="buttons">
+        <button class="btn btn-start" id="btnStart" onclick="startTimer()">Start</button>
+        <button class="btn btn-stop" id="btnStop" onclick="stopTimer()" disabled>Stop</button>
+        <button class="btn btn-lap" id="btnLap" onclick="recordLap()" disabled>Lap</button>
+        <button class="btn btn-reset" id="btnReset" onclick="resetTimer()" disabled>Reset</button>
+    </div>
+</div>
+
+<div class="laps-container" id="lapsContainer"></div>
+
+<div class="footer">Timed by Claude Code agents &#9917;</div>
+
+<script>
+/* ═══════════════════════ STATE ═══════════════════════ */
+let startTime = 0;
+let elapsed = 0;
+let savedElapsed = 0;
+let rafId = null;
+let running = false;
+let laps = [];
+
+/* ═══════════════════════ DOM REFS ═══════════════════════ */
+const display = document.getElementById('display');
+const status = document.getElementById('status');
+const btnStart = document.getElementById('btnStart');
+const btnStop = document.getElementById('btnStop');
+const btnLap = document.getElementById('btnLap');
+const btnReset = document.getElementById('btnReset');
+const lapsContainer = document.getElementById('lapsContainer');
+
+/* ═══════════════════════ FORMAT ═══════════════════════ */
+function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const centiseconds = Math.floor((ms % 1000) / 10);
+    return {
+        main: String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0'),
+        ms: '.' + String(centiseconds).padStart(2, '0')
+    };
+}
+
+function formatDelta(ms) {
+    const sign = ms >= 0 ? '+' : '-';
+    const abs = Math.abs(ms);
+    const s = Math.floor(abs / 1000);
+    const cs = Math.floor((abs % 1000) / 10);
+    return sign + s + '.' + String(cs).padStart(2, '0') + 's';
+}
+
+/* ═══════════════════════ RENDER ═══════════════════════ */
+function updateDisplay() {
+    const t = formatTime(elapsed);
+    display.innerHTML = t.main + '<span class="ms">' + t.ms + '</span>';
+}
+
+function tick() {
+    elapsed = savedElapsed + (performance.now() - startTime);
+    updateDisplay();
+    rafId = requestAnimationFrame(tick);
+}
+
+/* ═══════════════════════ CONTROLS ═══════════════════════ */
+function startTimer() {
+    if (running) return;
+    running = true;
+    startTime = performance.now();
+    tick();
+
+    display.classList.add('running');
+    status.classList.add('active');
+    status.innerHTML = '<span class="status-dot"></span>Running';
+
+    btnStart.disabled = true;
+    btnStop.disabled = false;
+    btnLap.disabled = false;
+    btnReset.disabled = true;
+}
+
+function stopTimer() {
+    if (!running) return;
+    running = false;
+    savedElapsed = elapsed;
+    cancelAnimationFrame(rafId);
+    rafId = null;
+
+    display.classList.remove('running');
+    status.classList.remove('active');
+    status.innerHTML = '<span class="status-dot"></span>Stopped';
+
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+    btnLap.disabled = true;
+    btnReset.disabled = false;
+}
+
+function recordLap() {
+    if (!running) return;
+
+    const lapTime = elapsed;
+    const prevTotal = laps.length > 0 ? laps[laps.length - 1].total : 0;
+    const delta = lapTime - prevTotal;
+
+    laps.push({ total: lapTime, delta: delta });
+    renderLaps();
+}
+
+function resetTimer() {
+    if (running) return;
+    elapsed = 0;
+    savedElapsed = 0;
+    laps = [];
+    updateDisplay();
+
+    status.classList.remove('active');
+    status.innerHTML = '<span class="status-dot"></span>Ready';
+
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+    btnLap.disabled = true;
+    btnReset.disabled = true;
+
+    lapsContainer.innerHTML = '';
+}
+
+/* ═══════════════════════ LAPS RENDERING ═══════════════════════ */
+function renderLaps() {
+    if (laps.length === 0) {
+        lapsContainer.innerHTML = '';
+        return;
+    }
+
+    /* Find best and worst lap deltas */
+    let bestIdx = 0, worstIdx = 0;
+    if (laps.length > 1) {
+        laps.forEach((lap, i) => {
+            if (lap.delta < laps[bestIdx].delta) bestIdx = i;
+            if (lap.delta > laps[worstIdx].delta) worstIdx = i;
+        });
+    }
+
+    let html = '<div class="laps-header">Lap Times</div>';
+
+    /* Render in reverse order (newest first) */
+    for (let i = laps.length - 1; i >= 0; i--) {
+        const lap = laps[i];
+        let cls = 'lap-item';
+        if (laps.length > 1) {
+            if (i === bestIdx) cls += ' best';
+            else if (i === worstIdx) cls += ' worst';
+        }
+
+        const t = formatTime(lap.delta);
+        const total = formatTime(lap.total);
+
+        html += '<div class="' + cls + '">' +
+            '<span class="lap-num">Lap ' + (i + 1) + '</span>' +
+            '<span class="lap-time">' + t.main + t.ms + '</span>' +
+            '<span class="lap-delta">' + total.main + total.ms + '</span>' +
+            '</div>';
+    }
+
+    lapsContainer.innerHTML = html;
+}
+
+/* ═══════════════════════ KEYBOARD SHORTCUTS ═══════════════════════ */
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+        e.preventDefault();
+        if (running) stopTimer();
+        else startTimer();
+    } else if (e.code === 'KeyL' && running) {
+        recordLap();
+    } else if (e.code === 'KeyR' && !running) {
+        resetTimer();
+    }
+});
+</script>
+</body>
+</html>

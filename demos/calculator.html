@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLASICO Calculator — Powered by Standard de Liège</title>
+<style>
+/* ═══════════════════════ RESET & BASE ═══════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:#1a1a2e;
+    font-family:'Segoe UI',system-ui,sans-serif;
+    color:#eee;
+}
+
+/* ═══════════════════════ TITLE ═══════════════════════ */
+h1{
+    font-size:1.4rem;
+    font-weight:700;
+    text-align:center;
+    margin-bottom:20px;
+    letter-spacing:1px;
+    color:#fff;
+    text-shadow:0 0 12px rgba(228,0,43,.5);
+}
+h1 span.red{color:#E4002B}
+h1 span.sub{
+    display:block;font-size:.75rem;font-weight:400;
+    color:#aaa;margin-top:4px;letter-spacing:2px;
+    text-transform:uppercase;
+}
+
+/* ═══════════════════════ CALCULATOR SHELL ═══════════════════════ */
+.calculator{
+    width:340px;
+    background:linear-gradient(180deg,#16213e 0%,#0f0f23 100%);
+    border-radius:20px;
+    padding:24px;
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.6),
+        0 0 0 1px rgba(228,0,43,.15),
+        inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+/* ═══════════════════════ LCD DISPLAY ═══════════════════════ */
+.display{
+    background:#0a0a14;
+    border:2px solid #E4002B;
+    border-radius:12px;
+    padding:16px 20px;
+    margin-bottom:20px;
+    min-height:90px;
+    display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;
+    box-shadow:
+        inset 0 4px 12px rgba(0,0,0,.5),
+        0 0 8px rgba(228,0,43,.2);
+    overflow:hidden;
+}
+.display .expression{
+    font-size:.85rem;
+    color:#777;
+    font-family:'Courier New',monospace;
+    min-height:1.2em;
+    word-break:break-all;
+    text-align:right;
+    width:100%;
+}
+.display .value{
+    font-size:2.4rem;
+    font-weight:700;
+    color:#f0f0f0;
+    font-family:'Courier New',monospace;
+    text-shadow:0 0 10px rgba(228,0,43,.3);
+    word-break:break-all;
+    text-align:right;
+    width:100%;
+    line-height:1.1;
+}
+
+/* ═══════════════════════ BUTTON GRID ═══════════════════════ */
+.buttons{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+}
+
+/* ═══════════════════════ BUTTONS ═══════════════════════ */
+.btn{
+    height:58px;
+    border:none;
+    border-radius:12px;
+    font-size:1.2rem;
+    font-weight:600;
+    font-family:'Segoe UI',system-ui,sans-serif;
+    cursor:pointer;
+    transition:all .15s ease;
+    position:relative;
+    overflow:hidden;
+}
+
+/* Ripple effect base */
+.btn::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at var(--x,50%) var(--y,50%),rgba(255,255,255,.3) 0%,transparent 60%);
+    opacity:0;
+    transition:opacity .3s;
+}
+.btn:active::after{
+    opacity:1;
+    transition:opacity 0s;
+}
+
+/* Number buttons */
+.btn-num{
+    background:linear-gradient(180deg,#2a2a4a 0%,#1e1e3a 100%);
+    color:#f0f0f0;
+    box-shadow:0 4px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.08);
+}
+.btn-num:hover{
+    background:linear-gradient(180deg,#353560 0%,#282850 100%);
+    transform:translateY(-2px);
+    box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.1);
+}
+.btn-num:active{
+    transform:translateY(1px);
+    box-shadow:0 2px 4px rgba(0,0,0,.3);
+}
+
+/* Operator buttons -- Standard red */
+.btn-op{
+    background:linear-gradient(180deg,#E4002B 0%,#b80023 100%);
+    color:#fff;
+    box-shadow:0 4px 8px rgba(228,0,43,.3),inset 0 1px 0 rgba(255,255,255,.15);
+}
+.btn-op:hover{
+    background:linear-gradient(180deg,#ff1a45 0%,#E4002B 100%);
+    transform:translateY(-2px);
+    box-shadow:0 6px 16px rgba(228,0,43,.5),inset 0 1px 0 rgba(255,255,255,.2);
+}
+.btn-op:active{
+    transform:translateY(1px);
+    box-shadow:0 2px 4px rgba(228,0,43,.3);
+}
+
+/* Function buttons (C, %, +/-) */
+.btn-fn{
+    background:linear-gradient(180deg,#3a3a5a 0%,#2a2a48 100%);
+    color:#E4002B;
+    font-weight:700;
+    box-shadow:0 4px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.btn-fn:hover{
+    background:linear-gradient(180deg,#4a4a6a 0%,#3a3a58 100%);
+    transform:translateY(-2px);
+    box-shadow:0 6px 14px rgba(0,0,0,.4);
+}
+.btn-fn:active{
+    transform:translateY(1px);
+    box-shadow:0 2px 4px rgba(0,0,0,.3);
+}
+
+/* Equals button -- wide, bright red */
+.btn-eq{
+    background:linear-gradient(180deg,#E4002B 0%,#a0001e 100%);
+    color:#fff;
+    font-size:1.5rem;
+    box-shadow:0 4px 12px rgba(228,0,43,.4),inset 0 1px 0 rgba(255,255,255,.2);
+}
+.btn-eq:hover{
+    background:linear-gradient(180deg,#ff2040 0%,#E4002B 100%);
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(228,0,43,.6),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-eq:active{
+    transform:translateY(1px);
+    box-shadow:0 2px 4px rgba(228,0,43,.3);
+}
+
+/* Zero button spans 2 columns */
+.btn-zero{
+    grid-column:span 2;
+}
+
+/* ═══════════════════════ FOOTER ═══════════════════════ */
+.footer{
+    margin-top:20px;
+    font-size:.7rem;
+    color:#555;
+    text-align:center;
+    letter-spacing:.5px;
+}
+
+/* ═══════════════════════ GOAL ANIMATION ═══════════════════════ */
+@keyframes goalFlash{
+    0%,100%{box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(228,0,43,.15)}
+    50%{box-shadow:0 20px 60px rgba(228,0,43,.5),0 0 40px rgba(228,0,43,.3)}
+}
+.calculator.goal{
+    animation:goalFlash .3s ease 3;
+}
+
+@keyframes pulse{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.02)}
+}
+</style>
+</head>
+<body>
+
+<h1>
+    <span class="red">CLASICO</span> Calculator
+    <span class="sub">Powered by Standard de Li&egrave;ge</span>
+</h1>
+
+<div class="calculator" id="calculator">
+    <!-- LCD Display -->
+    <div class="display">
+        <div class="expression" id="expression"></div>
+        <div class="value" id="display">0</div>
+    </div>
+
+    <!-- Button Grid -->
+    <div class="buttons">
+        <!-- Row 1: C, +/-, %, / -->
+        <button class="btn btn-fn"  data-action="clear">C</button>
+        <button class="btn btn-fn"  data-action="negate">+/&minus;</button>
+        <button class="btn btn-fn"  data-action="percent">%</button>
+        <button class="btn btn-op"  data-action="operator" data-value="/">&divide;</button>
+
+        <!-- Row 2: 7, 8, 9, x -->
+        <button class="btn btn-num" data-action="number" data-value="7">7</button>
+        <button class="btn btn-num" data-action="number" data-value="8">8</button>
+        <button class="btn btn-num" data-action="number" data-value="9">9</button>
+        <button class="btn btn-op"  data-action="operator" data-value="*">&times;</button>
+
+        <!-- Row 3: 4, 5, 6, - -->
+        <button class="btn btn-num" data-action="number" data-value="4">4</button>
+        <button class="btn btn-num" data-action="number" data-value="5">5</button>
+        <button class="btn btn-num" data-action="number" data-value="6">6</button>
+        <button class="btn btn-op"  data-action="operator" data-value="-">&minus;</button>
+
+        <!-- Row 4: 1, 2, 3, + -->
+        <button class="btn btn-num" data-action="number" data-value="1">1</button>
+        <button class="btn btn-num" data-action="number" data-value="2">2</button>
+        <button class="btn btn-num" data-action="number" data-value="3">3</button>
+        <button class="btn btn-op"  data-action="operator" data-value="+">+</button>
+
+        <!-- Row 5: 0 (2 cols), ., = -->
+        <button class="btn btn-num btn-zero" data-action="number" data-value="0">0</button>
+        <button class="btn btn-num" data-action="decimal">.</button>
+        <button class="btn btn-eq"  data-action="equals">=</button>
+    </div>
+</div>
+
+<div class="footer">Built by Claude Code agents during the match &#9917;</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   CLASICO Calculator — JavaScript Engine
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    'use strict';
+
+    // ─── State ───
+    let currentValue = '0';
+    let previousValue = '';
+    let operator = null;
+    let shouldResetDisplay = false;
+    let lastExpression = '';
+
+    // ─── DOM refs ───
+    const display = document.getElementById('display');
+    const expression = document.getElementById('expression');
+    const calculator = document.getElementById('calculator');
+
+    // ─── Format number for display ───
+    function formatDisplay(val) {
+        if (val === 'Error') return 'Error';
+        const str = String(val);
+        // If it's being typed (has trailing dot or is very long), show raw
+        if (str.includes('.') && str.endsWith('.')) return str;
+        if (str.length > 12) {
+            const num = parseFloat(str);
+            if (Math.abs(num) >= 1e12 || (Math.abs(num) < 1e-6 && num !== 0)) {
+                return num.toExponential(5);
+            }
+            // Truncate decimal places to fit
+            const intPart = str.split('.')[0];
+            const decimals = Math.max(0, 11 - intPart.length);
+            return parseFloat(num.toFixed(decimals)).toString();
+        }
+        return str;
+    }
+
+    // ─── Update the LCD ───
+    function updateDisplay() {
+        display.textContent = formatDisplay(currentValue);
+        expression.textContent = lastExpression;
+    }
+
+    // ─── Operator symbol mapping ───
+    function opSymbol(op) {
+        switch(op) {
+            case '+': return '+';
+            case '-': return '\u2212';
+            case '*': return '\u00D7';
+            case '/': return '\u00F7';
+            default: return op;
+        }
+    }
+
+    // ─── Calculate ───
+    function calculate(a, b, op) {
+        const numA = parseFloat(a);
+        const numB = parseFloat(b);
+        if (isNaN(numA) || isNaN(numB)) return 'Error';
+        let result;
+        switch(op) {
+            case '+': result = numA + numB; break;
+            case '-': result = numA - numB; break;
+            case '*': result = numA * numB; break;
+            case '/':
+                if (numB === 0) return 'Error';
+                result = numA / numB;
+                break;
+            default: return 'Error';
+        }
+        // Handle floating point precision
+        return parseFloat(result.toPrecision(12)).toString();
+    }
+
+    // ─── Goal flash animation ───
+    function triggerGoal() {
+        calculator.classList.remove('goal');
+        // Force reflow
+        void calculator.offsetWidth;
+        calculator.classList.add('goal');
+        setTimeout(() => calculator.classList.remove('goal'), 1000);
+    }
+
+    // ─── Handle actions ───
+    function handleAction(action, value) {
+        switch(action) {
+
+            case 'number':
+                if (currentValue === 'Error') {
+                    currentValue = value;
+                    shouldResetDisplay = false;
+                } else if (shouldResetDisplay) {
+                    currentValue = value;
+                    shouldResetDisplay = false;
+                } else {
+                    if (currentValue === '0' && value !== '0') {
+                        currentValue = value;
+                    } else if (currentValue === '0' && value === '0') {
+                        // stay at 0
+                    } else {
+                        if (currentValue.replace('-','').replace('.','').length >= 15) return;
+                        currentValue += value;
+                    }
+                }
+                break;
+
+            case 'decimal':
+                if (shouldResetDisplay) {
+                    currentValue = '0.';
+                    shouldResetDisplay = false;
+                } else if (!currentValue.includes('.')) {
+                    currentValue += '.';
+                }
+                break;
+
+            case 'operator':
+                if (currentValue === 'Error') return;
+                if (operator && !shouldResetDisplay) {
+                    // Chain calculation
+                    const result = calculate(previousValue, currentValue, operator);
+                    lastExpression = previousValue + ' ' + opSymbol(operator) + ' ' + currentValue + ' =';
+                    currentValue = result;
+                    previousValue = result;
+                    if (result === 'Error') {
+                        operator = null;
+                        previousValue = '';
+                        lastExpression = 'Error';
+                        updateDisplay();
+                        return;
+                    }
+                } else {
+                    previousValue = currentValue;
+                }
+                operator = value;
+                lastExpression = previousValue + ' ' + opSymbol(value);
+                shouldResetDisplay = true;
+                break;
+
+            case 'equals':
+                if (currentValue === 'Error') return;
+                if (operator && previousValue !== '') {
+                    const result = calculate(previousValue, currentValue, operator);
+                    lastExpression = previousValue + ' ' + opSymbol(operator) + ' ' + currentValue + ' =';
+                    currentValue = result;
+                    previousValue = '';
+                    operator = null;
+                    shouldResetDisplay = true;
+                    triggerGoal();
+                }
+                break;
+
+            case 'clear':
+                currentValue = '0';
+                previousValue = '';
+                operator = null;
+                shouldResetDisplay = false;
+                lastExpression = '';
+                break;
+
+            case 'negate':
+                if (currentValue === 'Error' || currentValue === '0') return;
+                if (currentValue.startsWith('-')) {
+                    currentValue = currentValue.substring(1);
+                } else {
+                    currentValue = '-' + currentValue;
+                }
+                break;
+
+            case 'percent':
+                if (currentValue === 'Error') return;
+                const num = parseFloat(currentValue);
+                if (isNaN(num)) return;
+                currentValue = parseFloat((num / 100).toPrecision(12)).toString();
+                break;
+        }
+
+        updateDisplay();
+    }
+
+    // ─── Event delegation on button grid ───
+    document.querySelector('.buttons').addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const value = btn.dataset.value || '';
+        handleAction(action, value);
+    });
+
+    // ─── Keyboard support ───
+    document.addEventListener('keydown', function(e) {
+        const key = e.key;
+        if (key >= '0' && key <= '9') {
+            handleAction('number', key);
+        } else if (key === '.') {
+            handleAction('decimal');
+        } else if (key === '+') {
+            handleAction('operator', '+');
+        } else if (key === '-') {
+            handleAction('operator', '-');
+        } else if (key === '*') {
+            handleAction('operator', '*');
+        } else if (key === '/') {
+            e.preventDefault();
+            handleAction('operator', '/');
+        } else if (key === 'Enter' || key === '=') {
+            handleAction('equals');
+        } else if (key === 'Escape' || key === 'c' || key === 'C') {
+            handleAction('clear');
+        } else if (key === '%') {
+            handleAction('percent');
+        } else if (key === 'Backspace') {
+            // Bonus: backspace removes last char
+            if (currentValue.length > 1 && currentValue !== 'Error') {
+                currentValue = currentValue.slice(0, -1);
+            } else {
+                currentValue = '0';
+            }
+            updateDisplay();
+        }
+    });
+
+    // ─── Ripple position tracking ───
+    document.querySelectorAll('.btn').forEach(function(btn) {
+        btn.addEventListener('pointerdown', function(e) {
+            const rect = btn.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(0);
+            const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(0);
+            btn.style.setProperty('--x', x + '%');
+            btn.style.setProperty('--y', y + '%');
+        });
+    });
+
+    // ─── Init display ───
+    updateDisplay();
+
+})();
+</script>
+</body>
+</html>

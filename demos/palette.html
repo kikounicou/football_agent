@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLASICO Color Palette Generator</title>
+<style>
+/* ═══════════════════════ RESET & BASE ═══════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+    background:#1a1a2e;
+    font-family:'Segoe UI',system-ui,sans-serif;
+    color:#eee;
+    min-height:100vh;
+    overflow-x:hidden;
+}
+
+/* ═══════════════════════ HEADER ═══════════════════════ */
+#header{
+    position:sticky;top:0;z-index:100;
+    display:flex;align-items:center;justify-content:center;gap:16px;
+    height:72px;
+    background:linear-gradient(180deg,#1a1a2e 0%,#0d0d1a 100%);
+    border-bottom:2px solid #333;
+    box-shadow:0 4px 20px rgba(0,0,0,.6);
+    user-select:none;
+}
+#header .logo{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;font-weight:900;
+    background:#E4002B;border:3px solid #ff4d6a;color:#fff;
+}
+#header h1{
+    font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:3px;
+    background:linear-gradient(90deg,#E4002B,#fff,#E4002B);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+}
+#header .subtitle{
+    font-size:11px;color:#888;letter-spacing:1px;
+    position:absolute;bottom:6px;
+}
+
+/* ═══════════════════════ LAYOUT ═══════════════════════ */
+main{
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:24px;
+    max-width:1400px;
+    margin:0 auto;
+    padding:24px;
+}
+@media(max-width:900px){
+    main{grid-template-columns:1fr;max-width:600px}
+}
+
+/* ═══════════════════════ SECTIONS ═══════════════════════ */
+section{
+    background:rgba(255,255,255,.04);
+    border-radius:12px;
+    padding:20px;
+    border:1px solid rgba(255,255,255,.08);
+}
+section h2{
+    font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:2px;
+    color:#E4002B;margin-bottom:16px;
+    display:flex;align-items:center;gap:8px;
+}
+section h2 .icon{font-size:18px}
+
+/* ═══════════════════════ PRIMARY PALETTE ═══════════════════════ */
+.palette-row{
+    display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;
+}
+.swatch{
+    width:80px;height:80px;border-radius:10px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    padding:6px;font-size:11px;font-weight:600;
+    border:2px solid transparent;
+    transition:transform .15s,border-color .15s,box-shadow .15s;
+    position:relative;
+    overflow:hidden;
+}
+.swatch:hover{
+    transform:scale(1.08);
+    border-color:rgba(255,255,255,.4);
+    box-shadow:0 4px 16px rgba(0,0,0,.4);
+}
+.swatch:active{transform:scale(.96)}
+.swatch .hex{
+    background:rgba(0,0,0,.5);border-radius:4px;
+    padding:2px 6px;backdrop-filter:blur(4px);
+    font-family:'Courier New',monospace;
+}
+.swatch.light .hex{background:rgba(0,0,0,.6);color:#fff}
+.swatch.copied::after{
+    content:'COPIE !';
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.7);
+    font-size:13px;font-weight:900;color:#4ade80;letter-spacing:2px;
+    animation:copiedFlash .8s ease forwards;
+}
+@keyframes copiedFlash{
+    0%{opacity:0;transform:scale(.5)}
+    20%{opacity:1;transform:scale(1.1)}
+    80%{opacity:1;transform:scale(1)}
+    100%{opacity:0}
+}
+
+/* ═══════════════════════ SHADES GENERATOR ═══════════════════════ */
+.shades-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(64px,1fr));
+    gap:6px;
+}
+.shade{
+    aspect-ratio:1;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:9px;font-family:'Courier New',monospace;
+    font-weight:600;
+    transition:transform .12s;
+    position:relative;
+}
+.shade:hover{transform:scale(1.12);z-index:2}
+.shade:active{transform:scale(.94)}
+.shade.copied::after{
+    content:'OK';
+    position:absolute;inset:0;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.6);color:#4ade80;font-size:12px;font-weight:900;
+    animation:copiedFlash .6s ease forwards;
+}
+
+/* ═══════════════════════ HSL PICKER ═══════════════════════ */
+.slider-group{margin-bottom:14px}
+.slider-group label{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;
+    margin-bottom:6px;color:#aaa;
+}
+.slider-group label span{
+    color:#E4002B;font-family:'Courier New',monospace;font-size:13px;
+}
+input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:8px;border-radius:4px;
+    outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:20px;height:20px;border-radius:50%;
+    background:#E4002B;border:2px solid #fff;
+    box-shadow:0 2px 8px rgba(0,0,0,.4);
+    cursor:pointer;
+}
+input[type=range]::-moz-range-thumb{
+    width:20px;height:20px;border-radius:50%;
+    background:#E4002B;border:2px solid #fff;
+    box-shadow:0 2px 8px rgba(0,0,0,.4);
+    cursor:pointer;
+}
+#hue-slider{background:linear-gradient(90deg,
+    hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),
+    hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%)
+)}
+#sat-slider{background:linear-gradient(90deg,hsl(0,0%,50%),hsl(0,100%,50%))}
+#light-slider{background:linear-gradient(90deg,#000,hsl(0,100%,50%),#fff)}
+
+.picker-preview{
+    display:flex;align-items:center;gap:12px;
+    margin-top:16px;padding:12px;
+    background:rgba(0,0,0,.3);border-radius:8px;
+}
+.picker-swatch{
+    width:60px;height:60px;border-radius:10px;
+    border:2px solid rgba(255,255,255,.2);
+    cursor:pointer;transition:transform .15s;
+    position:relative;
+}
+.picker-swatch:hover{transform:scale(1.05)}
+.picker-swatch.copied::after{
+    content:'COPIE !';
+    position:absolute;inset:0;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.7);color:#4ade80;font-size:10px;font-weight:900;
+    animation:copiedFlash .6s ease forwards;
+}
+.picker-values{
+    font-family:'Courier New',monospace;font-size:12px;line-height:1.8;
+}
+.picker-values .val{color:#E4002B;font-weight:700}
+
+/* ═══════════════════════ JERSEY PREVIEW ═══════════════════════ */
+.jersey-container{
+    display:flex;flex-direction:column;align-items:center;gap:16px;
+    padding:20px 0;
+}
+.jersey{
+    position:relative;
+    width:180px;height:220px;
+}
+/* -- body -- */
+.jersey-body{
+    position:absolute;
+    top:40px;left:30px;
+    width:120px;height:140px;
+    border-radius:8px 8px 4px 4px;
+    transition:background .2s,border-color .2s;
+    border:2px solid rgba(255,255,255,.15);
+    overflow:hidden;
+}
+.jersey-body .stripe{
+    position:absolute;
+    width:100%;height:100%;
+    transition:background .2s;
+}
+.jersey-body .stripe-1{clip-path:polygon(0 0,33% 0,33% 100%,0 100%)}
+.jersey-body .stripe-2{clip-path:polygon(33% 0,66% 0,66% 100%,33% 100%)}
+.jersey-body .stripe-3{clip-path:polygon(66% 0,100% 0,100% 100%,66% 100%)}
+/* -- collar -- */
+.jersey-collar{
+    position:absolute;
+    top:36px;left:58px;
+    width:64px;height:16px;
+    border-radius:0 0 32px 32px;
+    border:2px solid rgba(255,255,255,.2);
+    border-top:none;
+    transition:background .2s;
+}
+/* -- sleeves -- */
+.jersey-sleeve{
+    position:absolute;
+    width:36px;height:70px;
+    top:50px;
+    border-radius:6px;
+    transition:background .2s;
+    border:2px solid rgba(255,255,255,.1);
+}
+.jersey-sleeve.left{left:0;transform:rotate(8deg)}
+.jersey-sleeve.right{right:0;transform:rotate(-8deg)}
+/* -- number -- */
+.jersey-number{
+    position:absolute;
+    top:80px;left:50%;transform:translateX(-50%);
+    font-size:48px;font-weight:900;
+    font-family:'Impact','Arial Black',sans-serif;
+    text-shadow:2px 2px 0 rgba(0,0,0,.3);
+    transition:color .2s;
+    z-index:2;
+    user-select:none;
+}
+/* -- shorts -- */
+.jersey-shorts{
+    position:absolute;
+    top:180px;left:40px;
+    width:100px;height:40px;
+    border-radius:0 0 8px 8px;
+    transition:background .2s;
+    border:2px solid rgba(255,255,255,.1);
+    border-top:none;
+}
+/* -- player name -- */
+.jersey-name{
+    position:absolute;
+    top:55px;left:50%;transform:translateX(-50%);
+    font-size:11px;font-weight:900;letter-spacing:3px;
+    text-transform:uppercase;
+    text-shadow:1px 1px 0 rgba(0,0,0,.4);
+    z-index:2;
+    user-select:none;
+    white-space:nowrap;
+    transition:color .2s;
+}
+/* -- badge/crest area -- */
+.jersey-badge{
+    position:absolute;
+    top:68px;left:50px;
+    width:24px;height:24px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,.3);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:900;
+    z-index:2;
+    transition:background .2s, color .2s;
+}
+
+/* ═══════════════════════ JERSEY STYLE SELECTOR ═══════════════════════ */
+.style-buttons{
+    display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+}
+.style-btn{
+    padding:6px 14px;border-radius:6px;border:1px solid #444;
+    background:rgba(255,255,255,.06);color:#ccc;cursor:pointer;
+    font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;
+    transition:all .15s;
+}
+.style-btn:hover{background:rgba(228,0,43,.2);border-color:#E4002B;color:#fff}
+.style-btn.active{background:#E4002B;border-color:#E4002B;color:#fff}
+
+/* ═══════════════════════ TOAST ═══════════════════════ */
+#toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+    padding:10px 24px;border-radius:8px;
+    background:#E4002B;color:#fff;
+    font-size:13px;font-weight:700;letter-spacing:1px;
+    box-shadow:0 4px 20px rgba(228,0,43,.4);
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;
+    opacity:0;z-index:999;pointer-events:none;
+    white-space:nowrap;
+}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ═══════════════════════ EASTER EGG GOAL ═══════════════════════ */
+#goal-overlay{
+    position:fixed;inset:0;z-index:9999;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.85);
+    opacity:0;pointer-events:none;
+    transition:opacity .3s;
+}
+#goal-overlay.active{opacity:1;pointer-events:auto}
+#goal-overlay .goal-text{
+    font-size:120px;font-weight:900;color:#E4002B;
+    text-shadow:0 0 40px rgba(228,0,43,.6),0 0 80px rgba(228,0,43,.3);
+    animation:goalPulse 1.5s ease infinite;
+    letter-spacing:20px;
+}
+#goal-overlay .goal-sub{
+    font-size:24px;color:#fff;margin-top:16px;
+    letter-spacing:4px;text-transform:uppercase;
+    animation:goalSlide 1s ease .3s both;
+}
+#goal-overlay .goal-score{
+    font-size:48px;color:#FFD700;margin-top:24px;
+    font-weight:900;
+    animation:goalSlide 1s ease .6s both;
+}
+@keyframes goalPulse{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.08)}
+}
+@keyframes goalSlide{
+    from{transform:translateY(30px);opacity:0}
+    to{transform:translateY(0);opacity:1}
+}
+
+/* ═══════════════════════ FOOTER ═══════════════════════ */
+#footer{
+    text-align:center;padding:24px;
+    font-size:11px;color:#555;letter-spacing:1px;
+}
+#footer a{color:#E4002B;text-decoration:none}
+#footer a:hover{text-decoration:underline}
+
+/* ═══════════════════════ KONAMI HINT ═══════════════════════ */
+#konami-hint{
+    position:fixed;bottom:8px;right:12px;
+    font-size:9px;color:#333;letter-spacing:1px;
+    user-select:none;
+}
+
+/* ═══════════════════════ CONFETTI ═══════════════════════ */
+.confetti{
+    position:fixed;top:-10px;width:10px;height:10px;
+    border-radius:2px;z-index:10000;pointer-events:none;
+    animation:confettiFall linear forwards;
+}
+@keyframes confettiFall{
+    0%{transform:translateY(0) rotate(0deg);opacity:1}
+    80%{opacity:1}
+    100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<div id="header">
+    <div class="logo">S</div>
+    <h1>CLASICO Color Palette Generator</h1>
+    <span class="subtitle">ALLEZ LES ROUCHES !</span>
+</div>
+
+<!-- ═══════════════════════ MAIN ═══════════════════════ -->
+<main>
+    <!-- LEFT COLUMN -->
+    <div>
+        <!-- Primary Palette -->
+        <section id="primary-section">
+            <h2><span class="icon">&#9917;</span> Couleurs Principales</h2>
+            <div class="palette-row" id="primary-palette"></div>
+        </section>
+
+        <!-- Shades Generator -->
+        <section id="shades-section" style="margin-top:20px">
+            <h2><span class="icon">&#127912;</span> Generateur de Nuances</h2>
+            <p style="font-size:12px;color:#888;margin-bottom:12px">Cliquez sur une couleur principale ci-dessus pour generer ses nuances, ou utilisez le picker.</p>
+            <div class="shades-grid" id="shades-grid"></div>
+        </section>
+
+        <!-- HSL Picker -->
+        <section id="picker-section" style="margin-top:20px">
+            <h2><span class="icon">&#127752;</span> Picker HSL</h2>
+            <div class="slider-group">
+                <label>Teinte (H) <span id="hue-val">0</span></label>
+                <input type="range" id="hue-slider" min="0" max="360" value="348">
+            </div>
+            <div class="slider-group">
+                <label>Saturation (S) <span id="sat-val">100%</span></label>
+                <input type="range" id="sat-slider" min="0" max="100" value="100">
+            </div>
+            <div class="slider-group">
+                <label>Luminosite (L) <span id="light-val">45%</span></label>
+                <input type="range" id="light-slider" min="0" max="100" value="45">
+            </div>
+            <div class="picker-preview">
+                <div class="picker-swatch" id="picker-swatch" title="Cliquer pour copier"></div>
+                <div class="picker-values">
+                    <div>HEX : <span class="val" id="picker-hex">#E4002B</span></div>
+                    <div>HSL : <span class="val" id="picker-hsl">hsl(348,100%,45%)</span></div>
+                    <div>RGB : <span class="val" id="picker-rgb">rgb(228,0,43)</span></div>
+                </div>
+            </div>
+            <div style="margin-top:12px;text-align:center">
+                <button id="add-to-palette-btn" style="
+                    padding:8px 20px;border-radius:6px;border:1px solid #E4002B;
+                    background:rgba(228,0,43,.15);color:#E4002B;cursor:pointer;
+                    font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+                    transition:all .15s;
+                ">+ Ajouter a la palette</button>
+            </div>
+        </section>
+
+        <!-- Custom Colors -->
+        <section id="custom-section" style="margin-top:20px">
+            <h2><span class="icon">&#11088;</span> Mes Couleurs</h2>
+            <div class="palette-row" id="custom-palette">
+                <p style="font-size:12px;color:#555;font-style:italic" id="custom-empty">Utilisez le picker et "+ Ajouter" pour creer votre palette personnalisee</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- RIGHT COLUMN: Jersey Preview -->
+    <div>
+        <section id="jersey-section">
+            <h2><span class="icon">&#128085;</span> Preview Maillot</h2>
+            <div class="jersey-container">
+                <div class="jersey" id="jersey">
+                    <div class="jersey-collar" id="jersey-collar"></div>
+                    <div class="jersey-sleeve left" id="jersey-sleeve-l"></div>
+                    <div class="jersey-sleeve right" id="jersey-sleeve-r"></div>
+                    <div class="jersey-body" id="jersey-body">
+                        <div class="stripe stripe-1" id="stripe-1"></div>
+                        <div class="stripe stripe-2" id="stripe-2"></div>
+                        <div class="stripe stripe-3" id="stripe-3"></div>
+                    </div>
+                    <div class="jersey-badge" id="jersey-badge">S</div>
+                    <div class="jersey-name" id="jersey-name">STANDARD</div>
+                    <div class="jersey-number" id="jersey-number">10</div>
+                    <div class="jersey-shorts" id="jersey-shorts"></div>
+                </div>
+            </div>
+
+            <!-- Jersey color assignment -->
+            <div style="margin-top:8px">
+                <div class="slider-group">
+                    <label>Zone a colorier</label>
+                    <select id="jersey-zone" style="
+                        width:100%;padding:6px 10px;border-radius:6px;
+                        background:#1a1a2e;color:#eee;border:1px solid #444;
+                        font-size:12px;cursor:pointer;
+                    ">
+                        <option value="body">Corps du maillot</option>
+                        <option value="sleeves">Manches</option>
+                        <option value="collar">Col</option>
+                        <option value="shorts">Short</option>
+                        <option value="number">Numero</option>
+                        <option value="name">Nom du joueur</option>
+                    </select>
+                </div>
+                <p style="font-size:10px;color:#666;text-align:center;margin-top:4px">
+                    Modifiez le picker HSL puis selectionnez la zone du maillot a colorier
+                </p>
+                <div style="text-align:center;margin-top:8px">
+                    <button id="apply-color-btn" style="
+                        padding:6px 16px;border-radius:6px;border:1px solid #E4002B;
+                        background:rgba(228,0,43,.2);color:#E4002B;cursor:pointer;
+                        font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+                        transition:all .15s;
+                    ">Appliquer au maillot</button>
+                </div>
+            </div>
+
+            <!-- Jersey style presets -->
+            <div style="margin-top:16px">
+                <label style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:8px;text-align:center">Style de maillot</label>
+                <div class="style-buttons" id="style-buttons">
+                    <button class="style-btn active" data-style="classic">Classique</button>
+                    <button class="style-btn" data-style="stripes">Rayures</button>
+                    <button class="style-btn" data-style="halves">Mi-parti</button>
+                    <button class="style-btn" data-style="hoop">Bande</button>
+                    <button class="style-btn" data-style="away">Exterieur</button>
+                </div>
+            </div>
+
+            <!-- Player name/number -->
+            <div style="margin-top:16px;display:flex;gap:8px">
+                <div style="flex:1">
+                    <label style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px">Nom</label>
+                    <input type="text" id="player-name" value="STANDARD" maxlength="12" style="
+                        width:100%;padding:6px 10px;border-radius:6px;
+                        background:#0d0d1a;color:#eee;border:1px solid #444;
+                        font-size:12px;text-transform:uppercase;letter-spacing:1px;
+                        margin-top:4px;
+                    ">
+                </div>
+                <div style="width:60px">
+                    <label style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px">N&deg;</label>
+                    <input type="number" id="player-number" value="10" min="1" max="99" style="
+                        width:100%;padding:6px 10px;border-radius:6px;
+                        background:#0d0d1a;color:#eee;border:1px solid #444;
+                        font-size:12px;text-align:center;
+                        margin-top:4px;
+                    ">
+                </div>
+            </div>
+
+            <!-- Easter egg button -->
+            <div style="margin-top:20px;text-align:center">
+                <button id="goal-btn" style="
+                    padding:10px 24px;border-radius:8px;border:2px solid #E4002B;
+                    background:linear-gradient(135deg,#E4002B,#8B0000);color:#fff;cursor:pointer;
+                    font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:3px;
+                    transition:all .2s;box-shadow:0 4px 16px rgba(228,0,43,.3);
+                " title="BUUUUUT !">&#9917; BUUUUT !</button>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<div id="footer">
+    CLASICO Color Palette Generator &mdash; Standard de Liege &hearts; &mdash;
+    <a href="football-match.html">Voir le match 3D</a>
+</div>
+
+<!-- ═══════════════════════ TOAST ═══════════════════════ -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════ GOAL OVERLAY ═══════════════════════ -->
+<div id="goal-overlay">
+    <div class="goal-text">GOAL !</div>
+    <div class="goal-sub">STANDARD DE LIEGE</div>
+    <div class="goal-score" id="goal-score">1 - 0</div>
+</div>
+
+<!-- ═══════════════════════ KONAMI HINT ═══════════════════════ -->
+<div id="konami-hint">&#8593;&#8593;&#8595;&#8595;&#8592;&#8594;&#8592;&#8594; B A</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+/* ═══════════════════════ COLOR UTILITIES ═══════════════════════ */
+function hslToRgb(h, s, l) {
+    s /= 100; l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+    return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+}
+
+function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    return [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)];
+}
+
+function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+            case g: h = ((b - r) / d + 2) / 6; break;
+            case b: h = ((r - g) / d + 4) / 6; break;
+        }
+    }
+    return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+}
+
+function luminance(r, g, b) {
+    const [rs, gs, bs] = [r, g, b].map(v => {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+
+function isLight(hex) {
+    const [r, g, b] = hexToRgb(hex);
+    return luminance(r, g, b) > 0.4;
+}
+
+function lightenDarken(hex, steps) {
+    const [h, s, l] = rgbToHsl(...hexToRgb(hex));
+    const results = [];
+    for (let i = -steps; i <= steps; i++) {
+        const newL = Math.max(2, Math.min(98, l + i * (80 / (steps * 2))));
+        const [r, g, b] = hslToRgb(h, s, newL);
+        results.push(rgbToHex(r, g, b));
+    }
+    return results;
+}
+
+/* ═══════════════════════ PRIMARY PALETTE ═══════════════════════ */
+const PRIMARY_COLORS = [
+    { hex: '#E4002B', name: 'Standard Red' },
+    { hex: '#FFFFFF', name: 'Blanc' },
+    { hex: '#000000', name: 'Noir' },
+    { hex: '#8B0000', name: 'Sang & Or' },
+    { hex: '#FFD700', name: 'Or Champion' },
+    { hex: '#1a1a2e', name: 'Nuit Sclessin' },
+    { hex: '#C0C0C0', name: 'Argent' },
+    { hex: '#FF4D6A', name: 'Rose Rouche' },
+];
+
+function renderPrimaryPalette() {
+    const container = document.getElementById('primary-palette');
+    container.innerHTML = '';
+    PRIMARY_COLORS.forEach(c => {
+        const el = document.createElement('div');
+        el.className = 'swatch' + (isLight(c.hex) ? ' light' : '');
+        el.style.background = c.hex;
+        el.innerHTML = `<span class="hex">${c.hex}</span>`;
+        el.title = `${c.name} - Cliquer pour copier`;
+        el.addEventListener('click', () => {
+            copyHex(c.hex);
+            flashCopied(el);
+            generateShades(c.hex);
+        });
+        container.appendChild(el);
+    });
+}
+
+/* ═══════════════════════ SHADES GENERATOR ═══════════════════════ */
+function generateShades(hex) {
+    const grid = document.getElementById('shades-grid');
+    grid.innerHTML = '';
+    const shades = lightenDarken(hex, 7);
+    shades.forEach(shade => {
+        const el = document.createElement('div');
+        el.className = 'shade';
+        el.style.background = shade;
+        el.style.color = isLight(shade) ? '#000' : '#fff';
+        el.textContent = shade;
+        el.title = 'Cliquer pour copier';
+        el.addEventListener('click', () => {
+            copyHex(shade);
+            flashCopied(el);
+        });
+        grid.appendChild(el);
+    });
+}
+
+/* ═══════════════════════ HSL PICKER ═══════════════════════ */
+const hueSlider = document.getElementById('hue-slider');
+const satSlider = document.getElementById('sat-slider');
+const lightSlider = document.getElementById('light-slider');
+const hueVal = document.getElementById('hue-val');
+const satVal = document.getElementById('sat-val');
+const lightVal = document.getElementById('light-val');
+const pickerSwatch = document.getElementById('picker-swatch');
+const pickerHex = document.getElementById('picker-hex');
+const pickerHsl = document.getElementById('picker-hsl');
+const pickerRgb = document.getElementById('picker-rgb');
+
+let currentPickerHex = '#E4002B';
+
+function updatePicker() {
+    const h = parseInt(hueSlider.value);
+    const s = parseInt(satSlider.value);
+    const l = parseInt(lightSlider.value);
+    hueVal.textContent = h;
+    satVal.textContent = s + '%';
+    lightVal.textContent = l + '%';
+
+    const [r, g, b] = hslToRgb(h, s, l);
+    const hex = rgbToHex(r, g, b);
+    currentPickerHex = hex;
+
+    pickerSwatch.style.background = hex;
+    pickerHex.textContent = hex;
+    pickerHsl.textContent = `hsl(${h}, ${s}%, ${l}%)`;
+    pickerRgb.textContent = `rgb(${r}, ${g}, ${b})`;
+
+    // Update slider gradients based on current values
+    document.getElementById('sat-slider').style.background =
+        `linear-gradient(90deg, hsl(${h},0%,${l}%), hsl(${h},100%,${l}%))`;
+    document.getElementById('light-slider').style.background =
+        `linear-gradient(90deg, #000, hsl(${h},${s}%,50%), #fff)`;
+}
+
+hueSlider.addEventListener('input', updatePicker);
+satSlider.addEventListener('input', updatePicker);
+lightSlider.addEventListener('input', updatePicker);
+
+pickerSwatch.addEventListener('click', () => {
+    copyHex(currentPickerHex);
+    flashCopied(pickerSwatch);
+    generateShades(currentPickerHex);
+});
+
+/* ═══════════════════════ ADD TO CUSTOM PALETTE ═══════════════════════ */
+const customColors = [];
+
+document.getElementById('add-to-palette-btn').addEventListener('click', () => {
+    if (customColors.includes(currentPickerHex)) {
+        showToast('Couleur deja dans la palette !');
+        return;
+    }
+    customColors.push(currentPickerHex);
+    renderCustomPalette();
+    showToast('Couleur ajoutee : ' + currentPickerHex);
+});
+
+function renderCustomPalette() {
+    const container = document.getElementById('custom-palette');
+    const empty = document.getElementById('custom-empty');
+    if (empty) empty.style.display = customColors.length ? 'none' : 'block';
+
+    // Remove existing swatches (keep the empty message)
+    container.querySelectorAll('.swatch').forEach(el => el.remove());
+
+    customColors.forEach((hex, i) => {
+        const el = document.createElement('div');
+        el.className = 'swatch' + (isLight(hex) ? ' light' : '');
+        el.style.background = hex;
+        el.innerHTML = `<span class="hex">${hex}</span>`;
+        el.title = 'Cliquer pour copier, double-cliquer pour supprimer';
+        el.addEventListener('click', () => {
+            copyHex(hex);
+            flashCopied(el);
+            generateShades(hex);
+        });
+        el.addEventListener('dblclick', () => {
+            customColors.splice(i, 1);
+            renderCustomPalette();
+            showToast('Couleur supprimee');
+        });
+        container.appendChild(el);
+    });
+}
+
+/* ═══════════════════════ JERSEY PREVIEW ═══════════════════════ */
+const jerseyState = {
+    body: '#E4002B',
+    sleeves: '#E4002B',
+    collar: '#FFFFFF',
+    shorts: '#FFFFFF',
+    number: '#FFFFFF',
+    name: '#FFFFFF',
+    style: 'classic',
+};
+
+function applyJerseyColors() {
+    const body = document.getElementById('jersey-body');
+    const sleeveL = document.getElementById('jersey-sleeve-l');
+    const sleeveR = document.getElementById('jersey-sleeve-r');
+    const collar = document.getElementById('jersey-collar');
+    const shorts = document.getElementById('jersey-shorts');
+    const number = document.getElementById('jersey-number');
+    const name = document.getElementById('jersey-name');
+    const badge = document.getElementById('jersey-badge');
+
+    const s1 = document.getElementById('stripe-1');
+    const s2 = document.getElementById('stripe-2');
+    const s3 = document.getElementById('stripe-3');
+
+    switch (jerseyState.style) {
+        case 'classic':
+            body.style.background = jerseyState.body;
+            s1.style.background = 'transparent';
+            s2.style.background = 'transparent';
+            s3.style.background = 'transparent';
+            break;
+        case 'stripes':
+            body.style.background = jerseyState.body;
+            s1.style.background = jerseyState.body;
+            s2.style.background = '#FFFFFF';
+            s3.style.background = jerseyState.body;
+            break;
+        case 'halves':
+            body.style.background = '#FFFFFF';
+            s1.style.background = jerseyState.body;
+            s2.style.background = 'transparent';
+            s3.style.background = '#FFFFFF';
+            break;
+        case 'hoop':
+            body.style.background = jerseyState.body;
+            s1.style.background = 'transparent';
+            s2.style.background = '#FFFFFF';
+            s3.style.background = 'transparent';
+            break;
+        case 'away':
+            body.style.background = '#FFFFFF';
+            s1.style.background = 'transparent';
+            s2.style.background = 'transparent';
+            s3.style.background = 'transparent';
+            break;
+    }
+
+    sleeveL.style.background = jerseyState.sleeves;
+    sleeveR.style.background = jerseyState.sleeves;
+    collar.style.background = jerseyState.collar;
+    shorts.style.background = jerseyState.shorts;
+    number.style.color = jerseyState.number;
+    name.style.color = jerseyState.name;
+
+    badge.style.background = jerseyState.body;
+    badge.style.color = isLight(jerseyState.body) ? '#000' : '#fff';
+}
+
+document.getElementById('apply-color-btn').addEventListener('click', () => {
+    const zone = document.getElementById('jersey-zone').value;
+    jerseyState[zone] = currentPickerHex;
+    applyJerseyColors();
+    showToast(`Couleur appliquee au ${zone}`);
+});
+
+// Style buttons
+document.getElementById('style-buttons').addEventListener('click', e => {
+    const btn = e.target.closest('.style-btn');
+    if (!btn) return;
+    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    jerseyState.style = btn.dataset.style;
+    applyJerseyColors();
+});
+
+// Player name and number
+document.getElementById('player-name').addEventListener('input', e => {
+    document.getElementById('jersey-name').textContent = e.target.value.toUpperCase() || 'STANDARD';
+});
+document.getElementById('player-number').addEventListener('input', e => {
+    document.getElementById('jersey-number').textContent = Math.max(1, Math.min(99, parseInt(e.target.value) || 10));
+});
+
+/* ═══════════════════════ CLIPBOARD & TOAST ═══════════════════════ */
+function copyHex(hex) {
+    navigator.clipboard.writeText(hex).catch(() => {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = hex;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    });
+    showToast(getFootballCopyMessage(hex));
+}
+
+function flashCopied(el) {
+    el.classList.add('copied');
+    setTimeout(() => el.classList.remove('copied'), 800);
+}
+
+let toastTimer;
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+/* ═══════════════════════ FOOTBALL EASTER EGGS ═══════════════════════ */
+
+// Football-themed copy messages
+const footballMessages = [
+    "PASSE DECISIVE ! {hex} copie !",
+    "TACLE REUSSI ! {hex} dans le presse-papier !",
+    "CENTRE PARFAIT ! {hex} est a vous !",
+    "CONTROLE DE BALLE ! {hex} maitrise !",
+    "DRIBBLE ! {hex} copie en beaute !",
+    "FRAPPE ! {hex} au fond du filet !",
+    "REPRISE DE VOLEE ! {hex} c'est copie !",
+    "COUP FRANC ! {hex} bien tire !",
+    "LOB MAGNIFIQUE ! {hex} dans la lucarne !",
+    "TALONNADE ! {hex} copie avec style !",
+];
+
+function getFootballCopyMessage(hex) {
+    const msg = footballMessages[Math.floor(Math.random() * footballMessages.length)];
+    return msg.replace('{hex}', hex);
+}
+
+// GOAL button Easter egg
+let goalCount = 0;
+const goalBtn = document.getElementById('goal-btn');
+const goalOverlay = document.getElementById('goal-overlay');
+
+goalBtn.addEventListener('click', () => {
+    goalCount++;
+    document.getElementById('goal-score').textContent = `${goalCount} - 0`;
+    goalOverlay.classList.add('active');
+    spawnConfetti();
+    // Play celebration sound effect (no audio, just visual)
+    goalBtn.style.transform = 'scale(1.2)';
+    setTimeout(() => goalBtn.style.transform = '', 200);
+    setTimeout(() => goalOverlay.classList.remove('active'), 2500);
+
+    // Special messages at milestones
+    if (goalCount === 6) {
+        setTimeout(() => showToast('Score historique ! Standard 6 - 0 Anderlecht !'), 2600);
+    } else if (goalCount === 10) {
+        setTimeout(() => showToast('MASSACRE ! C\'est la plus grosse defaite d\'Anderlecht !'), 2600);
+    } else if (goalCount === 50) {
+        setTimeout(() => showToast('OK, ca suffit maintenant... Anderlecht n\'existe plus.'), 2600);
+    }
+});
+
+goalOverlay.addEventListener('click', () => {
+    goalOverlay.classList.remove('active');
+});
+
+// Confetti
+function spawnConfetti() {
+    const colors = ['#E4002B', '#FFFFFF', '#FFD700', '#FF4D6A', '#8B0000'];
+    for (let i = 0; i < 60; i++) {
+        const conf = document.createElement('div');
+        conf.className = 'confetti';
+        conf.style.left = Math.random() * 100 + 'vw';
+        conf.style.background = colors[Math.floor(Math.random() * colors.length)];
+        conf.style.width = (Math.random() * 8 + 5) + 'px';
+        conf.style.height = (Math.random() * 8 + 5) + 'px';
+        conf.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+        conf.style.animationDelay = (Math.random() * 0.8) + 's';
+        document.body.appendChild(conf);
+        setTimeout(() => conf.remove(), 4000);
+    }
+}
+
+// Konami Code Easter Egg: triggers a full celebration mode
+const konamiSequence = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiIndex = 0;
+
+document.addEventListener('keydown', e => {
+    if (e.key === konamiSequence[konamiIndex] || e.key.toLowerCase() === konamiSequence[konamiIndex]) {
+        konamiIndex++;
+        if (konamiIndex === konamiSequence.length) {
+            konamiIndex = 0;
+            activateKonami();
+        }
+    } else {
+        konamiIndex = 0;
+    }
+});
+
+function activateKonami() {
+    // Change all colors to Standard red celebration
+    document.body.style.transition = 'background 1s';
+    document.body.style.background = '#E4002B';
+    showToast('ALLEZ LES ROUCHES ! MODE CHAMPION ACTIVE !');
+    spawnConfetti();
+    spawnConfetti();
+
+    // Score a triple goal
+    for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+            goalCount++;
+            document.getElementById('goal-score').textContent = `${goalCount} - 0`;
+        }, i * 400);
+    }
+
+    // Jersey goes full Standard
+    jerseyState.body = '#E4002B';
+    jerseyState.sleeves = '#E4002B';
+    jerseyState.collar = '#FFFFFF';
+    jerseyState.shorts = '#FFFFFF';
+    jerseyState.number = '#FFFFFF';
+    jerseyState.name = '#FFFFFF';
+    jerseyState.style = 'classic';
+    applyJerseyColors();
+    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-style="classic"]').classList.add('active');
+
+    setTimeout(() => {
+        document.body.style.background = '#1a1a2e';
+    }, 3000);
+}
+
+// Double-click header logo for a random Standard chant
+document.querySelector('#header .logo').addEventListener('dblclick', () => {
+    const chants = [
+        'ALLEZ ALLEZ ALLEZ, LE STANDARD !',
+        'ROUGE ET BLANC, SANG ET OR !',
+        'SCLESSIN EST UNE FORTERESSE !',
+        'ON EST LES ROUCHES, ON EST LES MEILLEURS !',
+        'STANDARD, STANDARD, STANDARD DE LIEGE !',
+        'LE DOUZIEME HOMME, C\'EST NOUS !',
+        'ANDERLECHT ? CONNAIS PAS.',
+        'ICI C\'EST LIEGE !',
+    ];
+    showToast(chants[Math.floor(Math.random() * chants.length)]);
+    document.querySelector('#header .logo').style.animation = 'goalPulse .5s ease';
+    setTimeout(() => document.querySelector('#header .logo').style.animation = '', 500);
+});
+
+/* ═══════════════════════ INIT ═══════════════════════ */
+renderPrimaryPalette();
+generateShades('#E4002B');
+updatePicker();
+applyJerseyColors();
+
+</script>
+</body>
+</html>

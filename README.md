@@ -146,6 +146,17 @@ Vous pouvez regarder un match pre-scripte sans connexion serveur :
 2. Cliquez sur le bouton **Demo Match**
 3. Regardez le Standard marquer 6 buts spectaculaires contre Anderlecht
 
+## Pages demos
+
+Le dossier `demos/` contient des pages HTML construites par les agents Claude Code pendant des sessions live. Ce sont les "produits" des matchs — pendant que les agents travaillaient, le terrain 3D affichait leurs actions en temps reel :
+
+| Fichier | Description |
+|---|---|
+| `demos/calculator.html` | Calculatrice CLASICO |
+| `demos/converter.html` | Convertisseur d'unites CLASICO |
+| `demos/stopwatch.html` | Chronometre de match CLASICO |
+| `demos/palette.html` | Generateur de palette de couleurs CLASICO |
+
 ---
 
 # EN English version
@@ -286,6 +297,17 @@ You can watch a pre-scripted demo match without any server connection:
 2. Click the **Demo Match** button
 3. Watch Standard score 6 spectacular goals against Anderlecht
 
+## Demo Pages
+
+The `demos/` folder contains HTML pages built by Claude Code agents during live sessions. These are the "products" of the matches — while the agents were working, the 3D pitch was displaying their actions in real-time:
+
+| File | Description |
+|---|---|
+| `demos/calculator.html` | CLASICO Calculator |
+| `demos/converter.html` | CLASICO Unit Converter |
+| `demos/stopwatch.html` | CLASICO Match Stopwatch |
+| `demos/palette.html` | CLASICO Color Palette Generator |
+
 ---
 
 # Files / Fichiers
@@ -297,6 +319,9 @@ You can watch a pre-scripted demo match without any server connection:
 | `.claude/hooks/football-bridge.js` | Hook script — reads stdin, POSTs to server (~50 lines) |
 | `.claude/settings.local.json` | Claude Code hook configuration |
 | `.agents/skills/` | 10 Three.js reference skills for Claude Code (see below) |
+| `demos/` | Sample pages built by Claude Code agents during live matches |
+| `CLAUDE.md` | Project instructions for Claude Code (hook mappings, architecture) |
+| `ROADMAP.md` | Development roadmap with completion status |
 | `package.json` | Node.js dependencies (only `ws`) |
 
 # Three.js Skills
