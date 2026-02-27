@@ -1,0 +1,10 @@
+{
+  "name": "clasico-football-agent",
+  "private": false,
+  "scripts": {
+    "start": "node football-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

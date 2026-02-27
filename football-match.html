@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLASICO — Standard de Liège vs Anderlecht</title>
+<style>
+/* ═══════════════════════ RESET & BASE ═══════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#0a0a1a;font-family:'Segoe UI',system-ui,sans-serif;color:#eee}
+canvas{display:block}
+
+/* ═══════════════════════ SCOREBOARD ═══════════════════════ */
+#scoreboard{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:center;gap:0;
+    height:72px;
+    background:linear-gradient(180deg,#1a1a2e 0%,#0d0d1a 100%);
+    border-bottom:2px solid #333;
+    box-shadow:0 4px 20px rgba(0,0,0,.6);
+    user-select:none;
+}
+.team-badge{
+    display:flex;align-items:center;gap:12px;
+    padding:8px 24px;min-width:260px;
+}
+.team-badge.standard{justify-content:flex-end}
+.team-badge.anderlecht{justify-content:flex-start}
+.team-name{font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:2px}
+.team-name.standard{color:#E4002B}
+.team-name.anderlecht{color:#6A0DAD}
+.team-logo{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;font-weight:900;
+    border:3px solid;
+}
+.team-logo.standard{background:#E4002B;border-color:#ff4d6a;color:#fff}
+.team-logo.anderlecht{background:#6A0DAD;border-color:#9b4dca;color:#fff}
+#score-center{
+    display:flex;align-items:center;gap:16px;
+    padding:4px 28px;
+    background:rgba(255,255,255,.06);border-radius:8px;
+    min-width:180px;justify-content:center;
+}
+.score-num{font-size:36px;font-weight:900;font-variant-numeric:tabular-nums;transition:transform .1s}
+.score-num.standard{color:#E4002B}
+.score-num.anderlecht{color:#6A0DAD}
+.score-num.score-bump{animation:scoreBump .7s ease}
+@keyframes scoreBump{
+    0%{transform:scale(1)}
+    20%{transform:scale(2.2);color:#FFD700;text-shadow:0 0 20px rgba(255,215,0,.8)}
+    50%{transform:scale(1.6);color:#FFD700}
+    100%{transform:scale(1);text-shadow:none}
+}
+.score-sep{font-size:28px;color:#555;font-weight:300}
+#chrono{
+    position:absolute;top:54px;left:50%;transform:translateX(-50%);
+    font-size:11px;color:#888;letter-spacing:1px;
+    font-variant-numeric:tabular-nums;
+}
+
+/* ═══════════════════════ COMMENTARY PANEL ═══════════════════════ */
+#commentary{
+    position:fixed;right:0;top:72px;bottom:0;width:320px;z-index:90;
+    background:rgba(10,10,26,.92);border-left:1px solid #333;
+    display:flex;flex-direction:column;
+    backdrop-filter:blur(8px);
+}
+#commentary-header{
+    padding:12px 16px;font-weight:700;font-size:13px;
+    text-transform:uppercase;letter-spacing:2px;color:#888;
+    border-bottom:1px solid #222;
+    display:flex;justify-content:space-between;align-items:center;
+}
+#commentary-log{
+    flex:1;overflow-y:auto;padding:8px 12px;
+    scrollbar-width:thin;scrollbar-color:#333 transparent;
+}
+.comment-entry{
+    padding:6px 10px;margin-bottom:4px;border-radius:6px;
+    font-size:12px;line-height:1.5;
+    background:rgba(255,255,255,.03);
+    border-left:3px solid #333;
+    animation:slideIn .3s ease;
+}
+.comment-entry.goal{border-left-color:#FFD700;background:rgba(255,215,0,.08)}
+.comment-entry.join{border-left-color:#4CAF50}
+.comment-entry.leave{border-left-color:#F44336}
+.comment-entry.action{border-left-color:#2196F3}
+.comment-entry.chat{border-left-color:#FF9800}
+.comment-time{color:#666;font-size:10px;margin-right:6px;font-variant-numeric:tabular-nums}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ═══════════════════════ PLAYER PANEL ═══════════════════════ */
+#player-panel{
+    border-top:1px solid #222;padding:12px;max-height:200px;overflow-y:auto;
+}
+#player-panel h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:8px}
+.player-entry{
+    display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px;
+}
+.player-dot{width:8px;height:8px;border-radius:50%}
+.player-dot.standard{background:#E4002B}
+.player-dot.anderlecht{background:#6A0DAD}
+
+/* ═══════════════════════ CONTROLS ═══════════════════════ */
+#controls{
+    position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:100;
+    display:flex;gap:8px;
+}
+#controls button{
+    padding:8px 20px;border:1px solid #444;border-radius:6px;
+    background:rgba(20,20,40,.85);color:#ddd;font-size:13px;
+    cursor:pointer;transition:all .15s;backdrop-filter:blur(4px);
+}
+#controls button:hover{background:rgba(40,40,70,.95);border-color:#888}
+#controls button.active{border-color:#E4002B;color:#E4002B}
+
+/* ═══════════════════════ STATUS ═══════════════════════ */
+#ws-status{
+    position:fixed;bottom:16px;right:336px;z-index:100;
+    display:flex;align-items:center;gap:6px;
+    font-size:11px;color:#888;
+}
+#ws-dot{width:8px;height:8px;border-radius:50%;background:#F44336;transition:background .3s}
+#ws-dot.on{background:#4CAF50}
+
+/* ═══════════════════════ PLAYER LABELS (CSS2D) ═══════════════════════ */
+.player-label{
+    padding:2px 8px;border-radius:4px;
+    font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.5px;
+    white-space:nowrap;pointer-events:none;
+    text-align:center;line-height:1.3;
+    text-shadow:0 1px 3px rgba(0,0,0,.8);
+}
+.player-label.standard{color:#fff;background:rgba(228,0,43,.75)}
+.player-label.anderlecht{color:#fff;background:rgba(106,13,173,.65)}
+.player-label .jersey-num{font-size:13px;display:block}
+
+/* ═══════════════════════ SPEECH BUBBLES (CSS2D) ═══════════════════════ */
+.speech-bubble-wrap{pointer-events:none}
+.speech-bubble{
+    padding:6px 12px;border-radius:12px;
+    font-size:11px;max-width:200px;
+    background:rgba(20,20,40,.9);color:#eee;
+    border:2px solid #555;
+    animation:bubbleFade 4.5s ease forwards;
+    box-shadow:0 4px 12px rgba(0,0,0,.4);
+}
+.speech-bubble.standard{border-color:#E4002B}
+.speech-bubble.anderlecht{border-color:#6A0DAD}
+@keyframes bubbleFade{0%{opacity:0;transform:scale(.8)}6%{opacity:1;transform:scale(1)}78%{opacity:1}100%{opacity:0}}
+
+/* ═══════════════════════ GOAL FLASH ═══════════════════════ */
+#goal-flash{
+    position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;
+    display:none;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse,rgba(228,0,43,.3),transparent 70%);
+    pointer-events:none;
+}
+#goal-flash.show{display:flex;animation:goalPulse 2.5s ease forwards}
+#goal-flash .goal-text{
+    font-size:100px;font-weight:900;color:#FFD700;
+    text-shadow:0 0 40px rgba(255,215,0,.6),0 0 80px rgba(228,0,43,.4);
+    letter-spacing:8px;
+    animation:goalBounce 2.5s ease forwards;
+}
+@keyframes goalPulse{0%{opacity:0}10%{opacity:1}70%{opacity:1}100%{opacity:0}}
+@keyframes goalBounce{
+    0%{transform:scale(0) rotate(-10deg)}
+    15%{transform:scale(1.3) rotate(3deg)}
+    30%{transform:scale(1) rotate(0)}
+    50%{transform:scale(1.1)}
+    100%{transform:scale(1);opacity:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ SCOREBOARD ═══════════════════════ -->
+<div id="scoreboard">
+    <div class="team-badge standard">
+        <span class="team-name standard">Standard</span>
+        <div class="team-logo standard">SL</div>
+    </div>
+    <div id="score-center">
+        <span class="score-num standard" id="score-std">0</span>
+        <span class="score-sep">—</span>
+        <span class="score-num anderlecht" id="score-and">0</span>
+    </div>
+    <div class="team-badge anderlecht">
+        <div class="team-logo anderlecht">AN</div>
+        <span class="team-name anderlecht">Anderlecht</span>
+    </div>
+    <div id="chrono">00:00</div>
+</div>
+
+<!-- ═══════════════════════ GOAL FLASH ═══════════════════════ -->
+<div id="goal-flash"><span class="goal-text">GOOOAL!</span></div>
+
+<!-- ═══════════════════════ COMMENTARY ═══════════════════════ -->
+<div id="commentary">
+    <div id="commentary-header">
+        <span>⚽ Commentaire</span>
+        <span id="match-phase">Avant-match</span>
+    </div>
+    <div id="commentary-log"></div>
+    <div id="player-panel">
+        <h4>🔴 Standard sur le terrain</h4>
+        <div id="player-list"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ CONTROLS ═══════════════════════ -->
+<div id="controls">
+    <button onclick="startDemo()" id="btn-demo">▶ Demo Match</button>
+    <button onclick="stopDemo()" id="btn-stop">⏹ Stop</button>
+    <button onclick="resetMatch()">↺ Reset</button>
+    <button onclick="toggleCommentary()" id="btn-comm">💬 Commentary</button>
+</div>
+
+<!-- ═══════════════════════ WS STATUS ═══════════════════════ -->
+<div id="ws-status">
+    <span id="ws-dot"></span>
+    <span id="ws-label">Offline</span>
+</div>
+
+<!-- ═══════════════════════ THREE.JS ═══════════════════════ -->
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+/* ═══════════════════════ CONSTANTS ═══════════════════════ */
+const PITCH_W = 50, PITCH_H = 32;
+const STD_RED = 0xE4002B, STD_WHITE = 0xffffff;
+const AND_MAUVE = 0x6A0DAD, AND_WHITE = 0xffffff;
+
+const SKIN_TONES = [0xf5d0a9, 0xd4a76a, 0xc68642, 0x8d5524, 0x6b3e26];
+const HAIR_COLORS = [0x1a1a1a, 0x3b2314, 0x6b4226, 0x8b6914, 0xc4a35a, 0xd4d4d4];
+
+/* ── Rosters ── */
+const STANDARD_ROSTER = [
+    { name:'Bodart',       num:16, pos:'GK' },
+    { name:'Siquet',       num:15, pos:'RB' },
+    { name:'Dussenne',     num:25, pos:'CB' },
+    { name:'Laifis',       num:44, pos:'CB' },
+    { name:'Gavory',       num:65, pos:'LB' },
+    { name:'Raskin',       num:8,  pos:'CM' },
+    { name:'Witsel',       num:10, pos:'CM' },
+    { name:'Carcela',      num:17, pos:'CM' },
+    { name:'Amallah',      num:14, pos:'RW' },
+    { name:'Emond',        num:9,  pos:'ST' },
+    { name:'Mpoku',        num:21, pos:'LW' },
+    // Legends (subs)
+    { name:"Preud'homme",  num:1,  pos:'GK' },
+    { name:'Defour',       num:6,  pos:'CM' },
+    { name:'Van Buyten',   num:5,  pos:'CB' },
+];
+
+const ANDERLECHT_ROSTER = [
+    { name:'Van Crombrugge', num:1,  pos:'GK', idle:'stargazing' },
+    { name:'Debast',         num:3,  pos:'RB', idle:'tripping' },
+    { name:'Hoedt',          num:4,  pos:'CB', idle:'slow' },
+    { name:'Kompany',        num:5,  pos:'CB', idle:'circles' },
+    { name:'Murillo',        num:22, pos:'LB', idle:'confused' },
+    { name:'Wasil',          num:28, pos:'CM', idle:'buggy' },
+    { name:'Ashimeru',       num:20, pos:'CM', idle:'nervous' },
+    { name:'Refaelov',       num:11, pos:'CM', idle:'old' },
+    { name:'Verschaeren',    num:7,  pos:'RW', idle:'daydream' },
+    { name:'Zirkzee',        num:9,  pos:'ST', idle:'posing' },
+    { name:'Kouamé',         num:18, pos:'LW', idle:'tripping' },
+];
+
+/* ── Formation 4-3-3 positions (x, z) on pitch ── */
+// Standard attacks towards +z, Anderlecht towards -z
+function formationPos(pos, team) {
+    const sign = team === 'standard' ? -1 : 1;  // Standard starts bottom, Anderlecht top
+    const positions = {
+        'GK': [0, 14.5],
+        'RB': [8, 10],  'CB': [3, 11], 'CB2': [-3, 11], 'LB': [-8, 10],
+        'CM': [0, 6],   'CM2': [5, 7],  'CM3': [-5, 7],
+        'RW': [9, 2],   'ST': [0, 1],   'LW': [-9, 2],
+    };
+    // Handle duplicate positions by cycling
+    let key = pos;
+    if (!positions[key]) key = pos;  // fallback
+    const p = positions[key] || [0, 5];
+    return new THREE.Vector3(p[0], 0, p[1] * sign);
+}
+
+// Pre-calculate unique positions for 11 players (4-3-3)
+const FORMATION_433 = ['GK','RB','CB','CB2','LB','CM','CM2','CM3','RW','ST','LW'];
+
+function getFormationPosition(index, team) {
+    const key = FORMATION_433[index] || 'CM';
+    return formationPos(key, team);
+}
+
+const TUNNEL_POS = new THREE.Vector3(0, 0, -17);
+
+/* ═══════════════════════ STATE ═══════════════════════ */
+const characters = new Map();
+let scoreStandard = 0, scoreAnderlecht = 0;
+let matchMinute = 0, matchRunning = false, matchStartTime = 0;
+let demoRunning = false, demoTimeouts = [];
+let activeBallHolder = null;
+let nextStdIndex = 0;  // track next formation slot for Standard
+
+/* ═══════════════════════ RENDERER SETUP ═══════════════════════ */
+const clock = new THREE.Clock();
+const scene = new THREE.Scene();
+
+// Night sky gradient
+scene.background = new THREE.Color(0x0a0a2e);
+scene.fog = new THREE.FogExp2(0x0a0a2e, 0.008);
+
+// Camera — TV broadcast angle
+const camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 320) / window.innerHeight, 0.1, 200);
+camera.position.set(0, 28, 36);
+camera.lookAt(0, 0, 0);
+
+// WebGL renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth - 320, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+document.body.appendChild(renderer.domElement);
+
+// CSS2D renderer (labels & bubbles)
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth - 320, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0';
+labelRenderer.domElement.style.left = '0';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.body.appendChild(labelRenderer.domElement);
+
+// Controls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0, 0);
+controls.maxPolarAngle = Math.PI * 0.45;
+controls.minDistance = 10;
+controls.maxDistance = 60;
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.update();
+
+// Resize
+window.addEventListener('resize', () => {
+    const w = window.innerWidth - (commentaryVisible ? 320 : 0);
+    camera.aspect = w / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, window.innerHeight);
+    labelRenderer.setSize(w, window.innerHeight);
+});
+
+/* ═══════════════════════ LIGHTING ═══════════════════════ */
+// Ambient
+scene.add(new THREE.AmbientLight(0x334466, 0.4));
+
+// Hemisphere (sky/ground)
+scene.add(new THREE.HemisphereLight(0x6688cc, 0x224422, 0.3));
+
+// 4 Floodlight spots (from pylônes at corners)
+const FLOODLIGHT_POSITIONS = [
+    [-24, 18, -15], [24, 18, -15], [-24, 18, 15], [24, 18, 15]
+];
+FLOODLIGHT_POSITIONS.forEach(([x, y, z]) => {
+    const spot = new THREE.SpotLight(0xfff5e0, 2.5, 80, Math.PI * 0.35, 0.5, 1);
+    spot.position.set(x, y, z);
+    spot.target.position.set(0, 0, 0);
+    spot.castShadow = true;
+    spot.shadow.mapSize.set(1024, 1024);
+    spot.shadow.camera.near = 5;
+    spot.shadow.camera.far = 60;
+    scene.add(spot);
+    scene.add(spot.target);
+});
+
+/* ═══════════════════════ PITCH (with canvas texture) ═══════════════════════ */
+function createPitchTexture() {
+    const canvas = document.createElement('canvas');
+    const w = 1024, h = 656;  // ratio ~50:32
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    // Grass base
+    ctx.fillStyle = '#2d7a1e';
+    ctx.fillRect(0, 0, w, h);
+
+    // Mowing stripes (alternating light/dark)
+    const stripeW = w / 12;
+    for (let i = 0; i < 12; i++) {
+        if (i % 2 === 0) {
+            ctx.fillStyle = 'rgba(255,255,255,0.04)';
+            ctx.fillRect(i * stripeW, 0, stripeW, h);
+        }
+    }
+
+    // All white lines
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+
+    // Outer touchlines
+    const m = 20;  // margin
+    const pw = w - 2 * m, ph = h - 2 * m;
+    ctx.strokeRect(m, m, pw, ph);
+
+    // Halfway line
+    ctx.beginPath();
+    ctx.moveTo(m, h / 2);
+    ctx.lineTo(w - m, h / 2);
+    ctx.stroke();
+
+    // Center circle
+    const cr = pw * 0.092;  // ~9.15m scaled
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, cr, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Center spot
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Penalty areas (both ends)
+    const paW = pw * 0.41;  // ~40.32m
+    const paH = ph * 0.165; // ~16.5m
+    const paX = (w - paW) / 2;
+    // Top
+    ctx.strokeRect(paX, m, paW, paH);
+    // Bottom
+    ctx.strokeRect(paX, h - m - paH, paW, paH);
+
+    // Goal areas (both ends)
+    const gaW = pw * 0.183;  // ~18.3m
+    const gaH = ph * 0.055;  // ~5.5m
+    const gaX = (w - gaW) / 2;
+    ctx.strokeRect(gaX, m, gaW, gaH);
+    ctx.strokeRect(gaX, h - m - gaH, gaW, gaH);
+
+    // Penalty spots
+    const penDist = ph * 0.11;  // ~11m
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(w / 2, m + penDist, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(w / 2, h - m - penDist, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Penalty arcs
+    ctx.beginPath();
+    ctx.arc(w / 2, m + penDist, cr, 0.3 * Math.PI, 0.7 * Math.PI);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(w / 2, h - m - penDist, cr, 1.3 * Math.PI, 1.7 * Math.PI);
+    ctx.stroke();
+
+    // Corner arcs
+    const cornerR = pw * 0.01;
+    [[m, m], [w - m, m], [m, h - m], [w - m, h - m]].forEach(([cx, cy]) => {
+        ctx.beginPath();
+        const startAngle = cx < w / 2 ? (cy < h / 2 ? 0 : 1.5 * Math.PI) : (cy < h / 2 ? 0.5 * Math.PI : Math.PI);
+        ctx.arc(cx, cy, cornerR, startAngle, startAngle + Math.PI * 0.5);
+        ctx.stroke();
+    });
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+const pitchGeo = new THREE.PlaneGeometry(PITCH_W, PITCH_H);
+const pitchMat = new THREE.MeshStandardMaterial({
+    map: createPitchTexture(),
+    roughness: 0.85,
+    metalness: 0.0,
+});
+const pitch = new THREE.Mesh(pitchGeo, pitchMat);
+pitch.rotation.x = -Math.PI / 2;
+pitch.receiveShadow = true;
+scene.add(pitch);
+
+// Surround area (darker grass)
+const surroundGeo = new THREE.PlaneGeometry(70, 50);
+const surroundMat = new THREE.MeshStandardMaterial({ color: 0x1a5c0f, roughness: 0.9 });
+const surround = new THREE.Mesh(surroundGeo, surroundMat);
+surround.rotation.x = -Math.PI / 2;
+surround.position.y = -0.01;
+surround.receiveShadow = true;
+scene.add(surround);
+
+/* ═══════════════════════ GOALS ═══════════════════════ */
+function createGoal(z, rotY) {
+    const group = new THREE.Group();
+    const postMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0.6 });
+    const postRadius = 0.06, postH = 2.44;
+    const goalW = 7.32, goalD = 2;
+
+    // Left post
+    const lp = new THREE.Mesh(new THREE.CylinderGeometry(postRadius, postRadius, postH, 8), postMat);
+    lp.position.set(-goalW / 2, postH / 2, 0);
+    group.add(lp);
+
+    // Right post
+    const rp = new THREE.Mesh(new THREE.CylinderGeometry(postRadius, postRadius, postH, 8), postMat);
+    rp.position.set(goalW / 2, postH / 2, 0);
+    group.add(rp);
+
+    // Crossbar
+    const cb = new THREE.Mesh(new THREE.CylinderGeometry(postRadius, postRadius, goalW + 0.12, 8), postMat);
+    cb.rotation.z = Math.PI / 2;
+    cb.position.set(0, postH, 0);
+    group.add(cb);
+
+    // Net (wireframe box)
+    const netGeo = new THREE.BoxGeometry(goalW, postH, goalD);
+    const netMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff, wireframe: true, transparent: true, opacity: 0.15
+    });
+    const net = new THREE.Mesh(netGeo, netMat);
+    net.position.set(0, postH / 2, -goalD / 2 * (z > 0 ? 1 : -1));
+    group.add(net);
+
+    group.position.set(0, 0, z);
+    group.rotation.y = rotY;
+    scene.add(group);
+    return group;
+}
+
+createGoal(-PITCH_H / 2, 0);   // Standard's goal (they defend this side)
+createGoal(PITCH_H / 2, 0);    // Anderlecht's goal
+
+/* ═══════════════════════ STANDS (TRIBUNES) ═══════════════════════ */
+function createStand(x, z, rotY, length, team) {
+    const group = new THREE.Group();
+    const rows = 5;
+    const rowH = 1.2, rowD = 1.5;
+    const standColor = team === 'standard' ? 0xcc0020 : 0x4a0080;
+
+    for (let r = 0; r < rows; r++) {
+        const step = new THREE.Mesh(
+            new THREE.BoxGeometry(length, rowH * 0.3, rowD),
+            new THREE.MeshStandardMaterial({ color: standColor, roughness: 0.7 })
+        );
+        step.position.set(0, r * rowH * 0.35 + 0.5, -r * rowD * 0.5);
+        step.castShadow = true;
+        group.add(step);
+    }
+
+    // Supporters (instanced cubes)
+    const suppCount = team === 'standard' ? 200 : 15;
+    const suppGeo = new THREE.BoxGeometry(0.3, 0.5, 0.3);
+    const suppColor = team === 'standard' ? 0xE4002B : 0x6A0DAD;
+    const suppMat = new THREE.MeshStandardMaterial({ color: suppColor, roughness: 0.6 });
+    const supporters = new THREE.InstancedMesh(suppGeo, suppMat, suppCount);
+    const dummy = new THREE.Object3D();
+
+    for (let i = 0; i < suppCount; i++) {
+        const row = Math.floor(Math.random() * rows);
+        const xOff = (Math.random() - 0.5) * (length - 1);
+        dummy.position.set(xOff, row * rowH * 0.35 + 0.8, -row * rowD * 0.5);
+        dummy.updateMatrix();
+        supporters.setMatrixAt(i, dummy.matrix);
+    }
+    supporters.instanceMatrix.needsUpdate = true;
+    group.add(supporters);
+    group.supporterMesh = supporters;
+    group.supporterCount = suppCount;
+
+    group.position.set(x, 0, z);
+    group.rotation.y = rotY;
+    scene.add(group);
+    return group;
+}
+
+// Main stands (long sides)
+const standStdMain = createStand(0, -21, 0, 52, 'standard');      // Standard side (behind their goal approach)
+const standAndMain = createStand(0, 21, Math.PI, 52, 'anderlecht');
+
+// End stands (behind goals)
+const standStdEnd = createStand(-29, 0, Math.PI / 2, 34, 'standard');
+const standAndEnd = createStand(29, 0, -Math.PI / 2, 34, 'anderlecht');
+
+// Banderole "ALLEZ LES ROUCHES !"
+(function createBannerole() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#E4002B';
+    ctx.fillRect(0, 0, 512, 64);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 36px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚽ ALLEZ LES ROUCHES ! ⚽', 256, 44);
+    const tex = new THREE.CanvasTexture(canvas);
+    const banner = new THREE.Mesh(
+        new THREE.PlaneGeometry(20, 2.5),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+    );
+    banner.position.set(0, 5, -20);
+    scene.add(banner);
+})();
+
+/* ═══════════════════════ FLOODLIGHT PYLONS ═══════════════════════ */
+FLOODLIGHT_POSITIONS.forEach(([x, y, z]) => {
+    // Pole
+    const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.15, 0.2, y, 6),
+        new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4, metalness: 0.7 })
+    );
+    pole.position.set(x, y / 2, z);
+    pole.castShadow = true;
+    scene.add(pole);
+
+    // Light housing
+    const housing = new THREE.Mesh(
+        new THREE.BoxGeometry(2.5, 0.5, 1.5),
+        new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.3, metalness: 0.5, emissive: 0xfff5e0, emissiveIntensity: 0.5 })
+    );
+    housing.position.set(x, y, z);
+    scene.add(housing);
+});
+
+/* ═══════════════════════ FOOTBALL (BALL) ═══════════════════════ */
+const ballGeo = new THREE.IcosahedronGeometry(0.22, 1);
+// Vertex colors: black pentagons / white hexagons look
+const ballColors = [];
+const vCount = ballGeo.attributes.position.count;
+for (let i = 0; i < vCount; i++) {
+    const dark = (i % 5 === 0) ? 0.1 : 1.0;
+    ballColors.push(dark, dark, dark);
+}
+ballGeo.setAttribute('color', new THREE.Float32BufferAttribute(ballColors, 3));
+const ballMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.1 });
+const ball = new THREE.Mesh(ballGeo, ballMat);
+ball.position.set(0, 0.22, 0);
+ball.castShadow = true;
+scene.add(ball);
+
+/* ═══════════════════════ BALL PHYSICS ═══════════════════════ */
+const ballState = {
+    holder: null,       // character dribbling the ball
+    inFlight: false,    // ball mid-pass/shot
+    target: null,       // Vector3 destination
+    startPos: null,     // Vector3 origin of flight
+    arc: 0,             // parabolic height (0=ground, >0=lob/shot)
+    progress: 0,        // 0→1 flight progress
+    flightDuration: 0,  // seconds for flight
+    onArrive: null,     // callback on arrival
+};
+
+const GOAL_Z = PITCH_H / 2;      // 16 — Anderlecht goal line
+const GOAL_HALF_W = 3.66;
+
+function kickBall(target, power, arc, onArrive) {
+    ballState.holder = null;
+    ballState.inFlight = true;
+    ballState.target = target.clone();
+    ballState.startPos = ball.position.clone();
+    ballState.arc = arc || 0;
+    ballState.progress = 0;
+    ballState.onArrive = onArrive || null;
+    const dist = ballState.startPos.distanceTo(target);
+    ballState.flightDuration = Math.max(dist / (power || 12), 0.15);
+}
+
+function updateBall(delta) {
+    if (ballState.inFlight && ballState.target) {
+        ballState.progress += delta / ballState.flightDuration;
+        if (ballState.progress >= 1) {
+            ball.position.copy(ballState.target);
+            ball.position.y = Math.max(ballState.target.y, 0.22);
+            ballState.inFlight = false;
+            const cb = ballState.onArrive;
+            ballState.target = null;
+            ballState.startPos = null;
+            ballState.onArrive = null;
+            if (cb) cb();
+        } else {
+            const t = ballState.progress;
+            ball.position.lerpVectors(ballState.startPos, ballState.target, t);
+            // Parabolic arc
+            ball.position.y = 0.22 + ballState.arc * 4 * t * (1 - t);
+        }
+        ball.rotation.x += delta * 12;
+        ball.rotation.z += delta * 3;
+    } else if (ballState.holder) {
+        const hp = ballState.holder.group.position;
+        const facing = ballState.holder.group.rotation.y;
+        ball.position.x = hp.x + Math.sin(facing) * 0.4;
+        ball.position.z = hp.z + Math.cos(facing) * 0.4;
+        ball.position.y = 0.22 + Math.abs(Math.sin(performance.now() * 0.008)) * 0.04;
+        ball.rotation.x += delta * 5;
+    } else {
+        ball.rotation.x += delta * 0.5;
+        ball.rotation.y += delta * 0.3;
+    }
+}
+
+/* ═══════════════════════ FLYING PARTS (brutal tackle) ═══════════════════════ */
+const flyingParts = [];
+
+function spawnBlood(position) {
+    const count = 18 + Math.floor(Math.random() * 12);
+    const bloodMat = new THREE.MeshBasicMaterial({ color: 0xcc0000 });
+    for (let i = 0; i < count; i++) {
+        const size = 0.03 + Math.random() * 0.06;
+        const drop = new THREE.Mesh(new THREE.SphereGeometry(size, 4, 3), bloodMat);
+        drop.position.copy(position);
+        drop.position.y = 0.3 + Math.random() * 0.3;
+        scene.add(drop);
+        flyingParts.push({
+            mesh: drop,
+            vel: new THREE.Vector3(
+                (Math.random() - 0.5) * 6,
+                4 + Math.random() * 6,
+                (Math.random() - 0.5) * 6
+            ),
+            rotVel: new THREE.Vector3(Math.random() * 5, Math.random() * 5, Math.random() * 5),
+            life: 2.5 + Math.random() * 1.5,
+        });
+    }
+}
+
+function launchFlyingLeg(position) {
+    const legGroup = new THREE.Group();
+    // Thigh
+    const thigh = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05, 0.04, 0.25, 6),
+        new THREE.MeshStandardMaterial({ color: AND_MAUVE, roughness: 0.6 })
+    );
+    thigh.position.y = 0.12;
+    legGroup.add(thigh);
+    // Sock
+    const sock = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.05, 0.2, 6),
+        new THREE.MeshStandardMaterial({ color: AND_MAUVE, roughness: 0.6 })
+    );
+    sock.position.y = -0.1;
+    legGroup.add(sock);
+    // Boot
+    const boot = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 0.06, 0.14),
+        new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8 })
+    );
+    boot.position.y = -0.23;
+    legGroup.add(boot);
+    // Bloody stump at top
+    const stump = new THREE.Mesh(
+        new THREE.CircleGeometry(0.05, 8),
+        new THREE.MeshBasicMaterial({ color: 0xcc0000 })
+    );
+    stump.position.y = 0.25;
+    stump.rotation.x = -Math.PI / 2;
+    legGroup.add(stump);
+
+    legGroup.position.copy(position);
+    legGroup.position.y = 0.4;
+    scene.add(legGroup);
+
+    flyingParts.push({
+        mesh: legGroup,
+        vel: new THREE.Vector3(
+            (Math.random() - 0.5) * 4,
+            9 + Math.random() * 4,
+            (Math.random() - 0.5) * 4
+        ),
+        rotVel: new THREE.Vector3(
+            8 + Math.random() * 6,
+            Math.random() * 8,
+            Math.random() * 8
+        ),
+        life: 5,
+    });
+
+    // Blood splatter!
+    spawnBlood(position);
+}
+
+/* ═══════════════════════ STARS (sky decoration) ═══════════════════════ */
+(function createStars() {
+    const starsGeo = new THREE.BufferGeometry();
+    const positions = [];
+    for (let i = 0; i < 500; i++) {
+        positions.push(
+            (Math.random() - 0.5) * 150,
+            30 + Math.random() * 40,
+            (Math.random() - 0.5) * 150
+        );
+    }
+    starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.6 });
+    scene.add(new THREE.Points(starsGeo, starsMat));
+})();
+
+/* ═══════════════════════ UTILITY ═══════════════════════ */
+function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0; return h; }
+function pick(arr, seed) { return arr[Math.abs(seed) % arr.length]; }
+
+let commentaryVisible = true;
+function toggleCommentary() {
+    commentaryVisible = !commentaryVisible;
+    document.getElementById('commentary').style.display = commentaryVisible ? 'flex' : 'none';
+    document.getElementById('btn-comm').classList.toggle('active', !commentaryVisible);
+    window.dispatchEvent(new Event('resize'));
+}
+
+/* ═══════════════════════ PLAYER CREATION ═══════════════════════ */
+function createPlayer(team, data, formationIndex) {
+    const group = new THREE.Group();
+    const isStandard = team === 'standard';
+    const mainColor = isStandard ? STD_RED : AND_MAUVE;
+    const secondColor = isStandard ? STD_WHITE : AND_WHITE;
+    const skinTone = pick(SKIN_TONES, hashStr(data.name));
+    const hairColor = pick(HAIR_COLORS, hashStr(data.name + 'h'));
+
+    // Body (capsule — jersey color)
+    const body = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.16, 0.35, 4, 12),
+        new THREE.MeshStandardMaterial({ color: mainColor, roughness: 0.55 })
+    );
+    body.position.y = 0.55;
+    body.castShadow = true;
+    group.add(body);
+
+    // Shorts
+    const shorts = new THREE.Mesh(
+        new THREE.BoxGeometry(0.28, 0.12, 0.18),
+        new THREE.MeshStandardMaterial({ color: secondColor, roughness: 0.6 })
+    );
+    shorts.position.y = 0.3;
+    group.add(shorts);
+
+    // Socks (two small cylinders)
+    const sockMat = new THREE.MeshStandardMaterial({ color: mainColor, roughness: 0.6 });
+    [-0.07, 0.07].forEach(xOff => {
+        const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.2, 6), sockMat);
+        sock.position.set(xOff, 0.1, 0);
+        group.add(sock);
+    });
+
+    // Head
+    const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.14, 16, 12),
+        new THREE.MeshStandardMaterial({ color: skinTone, roughness: 0.65 })
+    );
+    head.position.y = 0.95;
+    head.castShadow = true;
+    group.add(head);
+
+    // Hair
+    const hair = new THREE.Mesh(
+        new THREE.SphereGeometry(0.145, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
+        new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.8 })
+    );
+    hair.position.y = 0.98;
+    group.add(hair);
+
+    // Eyes
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+    [-0.05, 0.05].forEach(xOff => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), eyeMat);
+        eye.position.set(xOff, 0.96, 0.12);
+        group.add(eye);
+        const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.013, 6, 4), pupilMat);
+        pupil.position.set(xOff, 0.96, 0.14);
+        group.add(pupil);
+    });
+
+    // Jersey number on back (small plane with canvas texture)
+    const numCanvas = document.createElement('canvas');
+    numCanvas.width = 64; numCanvas.height = 64;
+    const nCtx = numCanvas.getContext('2d');
+    nCtx.fillStyle = isStandard ? '#ffffff' : '#ffffff';
+    nCtx.font = 'bold 48px Arial';
+    nCtx.textAlign = 'center';
+    nCtx.fillText(String(data.num), 32, 50);
+    const numTex = new THREE.CanvasTexture(numCanvas);
+    const numPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.2, 0.2),
+        new THREE.MeshBasicMaterial({ map: numTex, transparent: true })
+    );
+    numPlane.position.set(0, 0.6, -0.17);
+    numPlane.rotation.y = Math.PI;
+    group.add(numPlane);
+
+    // CSS2D label
+    const labelDiv = document.createElement('div');
+    labelDiv.className = `player-label ${team}`;
+    labelDiv.innerHTML = `<span class="jersey-num">${esc(String(data.num))}</span>${esc(data.name)}`;
+    const label = new CSS2DObject(labelDiv);
+    label.position.y = 1.25;
+    label.center.set(0.5, 1);
+    group.add(label);
+
+    // Position
+    const targetPos = getFormationPosition(formationIndex, team);
+    if (isStandard) {
+        group.position.copy(TUNNEL_POS);
+    } else {
+        group.position.copy(targetPos);
+    }
+
+    scene.add(group);
+
+    const char = {
+        name: data.name,
+        num: data.num,
+        team,
+        posRole: data.pos,
+        idle: data.idle || 'focused',
+        group, body, head, hair, label,
+        targetPos: isStandard ? targetPos.clone() : null,
+        state: isStandard ? 'entering' : 'idle',
+        walkSpeed: 2.2 + Math.random() * 0.8,
+        walkPhase: Math.random() * Math.PI * 2,
+        formationIndex,
+        celebrating: false,
+        celebrateEnd: 0,
+        fallen: false,
+        fallenEnd: 0,
+    };
+
+    characters.set(data.name, char);
+    return char;
+}
+
+/* ═══════════════════════ ANDERLECHT NPCs ═══════════════════════ */
+function spawnAnderlecht() {
+    ANDERLECHT_ROSTER.forEach((data, i) => {
+        createPlayer('anderlecht', data, i);
+    });
+}
+spawnAnderlecht();
+
+/* ═══════════════════════ SPEECH BUBBLES ═══════════════════════ */
+function showBubble(char, message) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'speech-bubble-wrap';
+    const bubble = document.createElement('div');
+    bubble.className = `speech-bubble ${char.team}`;
+    bubble.textContent = message;
+    wrapper.appendChild(bubble);
+    const cssObj = new CSS2DObject(wrapper);
+    cssObj.position.y = 1.5;
+    cssObj.center.set(0.5, 1);
+    char.group.add(cssObj);
+    setTimeout(() => { char.group.remove(cssObj); }, 4800);
+}
+
+/* ═══════════════════════ PLAY CHOREOGRAPHY SYSTEM ═══════════════════════ */
+let playQueue = [];         // array of plays (each play = array of steps)
+let currentPlay = null;     // current play being executed
+let currentStepIdx = 0;
+let stepActive = false;
+let stepState = {};
+
+function queuePlay(steps) { playQueue.push(steps); }
+
+function advancePlay() {
+    stepActive = false;
+    stepState = {};
+    currentStepIdx++;
+    if (currentPlay && currentStepIdx < currentPlay.length) {
+        executeStep(currentPlay[currentStepIdx]);
+    } else {
+        currentPlay = null;
+        currentStepIdx = 0;
+        if (playQueue.length > 0) {
+            currentPlay = playQueue.shift();
+            currentStepIdx = 0;
+            executeStep(currentPlay[0]);
+        }
+    }
+}
+
+function startPlaySystem() {
+    if (!currentPlay && playQueue.length > 0) {
+        currentPlay = playQueue.shift();
+        currentStepIdx = 0;
+        executeStep(currentPlay[0]);
+    }
+}
+
+function executeStep(step) {
+    stepActive = true;
+    stepState = { type: step.type, startTime: performance.now() };
+
+    switch (step.type) {
+        case 'wait': {
+            stepState.duration = (step.duration || 1) * 1000;
+            break;
+        }
+        case 'chat': {
+            const char = characters.get(step.player);
+            if (char) showBubble(char, step.message);
+            logEvent('chat', `<strong>${esc(step.player)}</strong> : "${esc(step.message)}"`);
+            stepState.duration = (step.duration || 1.5) * 1000;
+            break;
+        }
+        case 'move': {
+            const char = characters.get(step.player);
+            if (char) {
+                char.state = 'moving';
+                char.celebrating = false;
+                char.fallen = false;
+                char.targetPos = new THREE.Vector3(step.target[0], 0, step.target[1]);
+                char.walkSpeed = step.speed || 3.5;
+            }
+            stepState.char = char;
+            break;
+        }
+        case 'dribble': {
+            const char = characters.get(step.player);
+            if (char) {
+                ballState.holder = char;
+                ballState.inFlight = false;
+                char.state = 'moving';
+                char.celebrating = false;
+                char.fallen = false;
+                char.targetPos = new THREE.Vector3(step.target[0], 0, step.target[1]);
+                char.walkSpeed = step.speed || 3.0;
+            }
+            stepState.char = char;
+            break;
+        }
+        case 'pickup': {
+            const char = characters.get(step.player);
+            if (char) {
+                ballState.holder = char;
+                ballState.inFlight = false;
+                ball.position.set(char.group.position.x + 0.4, 0.22, char.group.position.z);
+            }
+            stepState.duration = 200;
+            break;
+        }
+        case 'pass': {
+            const from = characters.get(step.from);
+            const to = characters.get(step.to);
+            if (from && to) {
+                from.kicking = true;
+                from.kickEnd = performance.now() + 300;
+                const target = to.group.position.clone();
+                target.y = 0.22;
+                kickBall(target, step.power || 14, 0, () => {
+                    ballState.holder = to;
+                    advancePlay();
+                });
+                logEvent('action', `<strong>${esc(step.from)}</strong> passe à <strong>${esc(step.to)}</strong>`);
+            } else { advancePlay(); }
+            return;
+        }
+        case 'lob': {
+            const from = characters.get(step.from);
+            const to = characters.get(step.to);
+            if (from && to) {
+                from.kicking = true;
+                from.kickEnd = performance.now() + 300;
+                const target = to.group.position.clone();
+                target.y = 0.22;
+                kickBall(target, step.power || 10, step.arc || 3, () => {
+                    ballState.holder = to;
+                    advancePlay();
+                });
+                logEvent('action', `<strong>${esc(step.from)}</strong> centre vers <strong>${esc(step.to)}</strong> !`);
+            } else { advancePlay(); }
+            return;
+        }
+        case 'shoot': {
+            const char = characters.get(step.player);
+            if (char) {
+                char.kicking = true;
+                char.kickEnd = performance.now() + 400;
+                const targetX = step.targetX ?? (Math.random() - 0.5) * 4;
+                const target = new THREE.Vector3(targetX, 0.22 + (step.targetH || 1.0), GOAL_Z + 1);
+                kickBall(target, step.power || 18, step.arc || 1.5, () => {
+                    handleEvent({ type: 'goal', scorer: step.player });
+                    advancePlay();
+                });
+                logEvent('action', `<strong>${esc(step.player)}</strong> FRAPPE !!! 💥`);
+            } else { advancePlay(); }
+            return;
+        }
+        case 'tackle': {
+            const tackler = characters.get(step.player);
+            const victim = characters.get(step.victim);
+            if (tackler && victim) {
+                tackler.sliding = true;
+                tackler.slideStart = performance.now();
+                tackler.slideEnd = performance.now() + 800;
+                tackler.state = 'moving';
+                tackler.targetPos = victim.group.position.clone();
+                tackler.walkSpeed = 6;
+                stepState.tackler = tackler;
+                stepState.victim = victim;
+                stepState.tackleResolved = false;
+            } else { stepState.duration = 200; }
+            break;
+        }
+        case 'header': {
+            const char = characters.get(step.player);
+            if (char) {
+                char.heading = true;
+                char.headerStart = performance.now();
+                char.headerEnd = performance.now() + 600;
+                const targetX = step.targetX ?? 0;
+                const target = new THREE.Vector3(targetX, 1.2, GOAL_Z + 1);
+                setTimeout(() => {
+                    kickBall(target, step.power || 14, step.arc || 0.3, () => {
+                        handleEvent({ type: 'goal', scorer: step.player });
+                        advancePlay();
+                    });
+                }, 200);
+                logEvent('action', `<strong>${esc(step.player)}</strong> TÊTE !!! 🤯`);
+            } else { advancePlay(); }
+            return;
+        }
+        case 'join': {
+            handleEvent({ type: 'join', name: step.player });
+            stepState.duration = (step.duration || 0.5) * 1000;
+            break;
+        }
+        case 'kickoff': {
+            handleEvent({ type: 'kickoff' });
+            stepState.duration = 500;
+            break;
+        }
+        case 'halftime': {
+            handleEvent({ type: 'halftime' });
+            stepState.duration = (step.duration || 2) * 1000;
+            break;
+        }
+        case 'fulltime': {
+            handleEvent({ type: 'fulltime' });
+            stepState.duration = 500;
+            break;
+        }
+        case 'leave': {
+            handleEvent({ type: 'leave', name: step.player });
+            stepState.duration = (step.duration || 2) * 1000;
+            break;
+        }
+        default:
+            stepState.duration = 500;
+    }
+}
+
+function updatePlay(delta) {
+    if (!stepActive || !currentPlay) return;
+    const now = performance.now();
+    const step = currentPlay[currentStepIdx];
+
+    // Timer-based steps
+    if (stepState.duration) {
+        if (now - stepState.startTime >= stepState.duration) advancePlay();
+        return;
+    }
+
+    // Movement-based steps (move, dribble)
+    if (step.type === 'move' || step.type === 'dribble') {
+        const char = stepState.char;
+        if (char && (char.state === 'idle' || !char.targetPos)) advancePlay();
+        return;
+    }
+
+    // Tackle step
+    if (step.type === 'tackle') {
+        const { tackler, victim, tackleResolved } = stepState;
+        if (!tackleResolved && tackler && victim) {
+            const dist = tackler.group.position.distanceTo(victim.group.position);
+            if (dist < 1.0) {
+                stepState.tackleResolved = true;
+                ballState.holder = tackler;
+                tackler.sliding = false;
+                tackler.state = 'idle';
+                tackler.targetPos = null;
+                victim.fallen = true;
+                if (step.brutal) {
+                    // BRUTAL TACKLE — leg flies off! No bubbles, let the carnage speak.
+                    victim.fallenEnd = now + 8000;
+                    launchFlyingLeg(victim.group.position.clone());
+                    logEvent('action', `💀 <strong>${esc(step.player)}</strong> TACLE SAUVAGE sur <strong>${esc(step.victim)}</strong> ! Une jambe s'envole dans les airs !`);
+                } else {
+                    victim.fallenEnd = now + 2000;
+                    showBubble(victim, pick(['Aïe !', 'Non !', 'Arbitre !', 'Pfff...'], Math.floor(now)));
+                    logEvent('action', `<strong>${esc(step.player)}</strong> tacle <strong>${esc(step.victim)}</strong> !`);
+                }
+                setTimeout(() => advancePlay(), 500);
+            }
+        }
+        return;
+    }
+}
+
+/* ═══════════════════════ SECURITY: HTML ESCAPE ═══════════════════════ */
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+/* ═══════════════════════ COMMENTARY LOG ═══════════════════════ */
+function logEvent(type, text) {
+    const log = document.getElementById('commentary-log');
+    const entry = document.createElement('div');
+    entry.className = `comment-entry ${type}`;
+    const mins = String(matchMinute).padStart(2, '0');
+    const icons = { goal: '⚽', join: '🟢', leave: '🔴', action: '⚡', chat: '💬', info: 'ℹ️' };
+    entry.innerHTML = `<span class="comment-time">${mins}'</span>${icons[type] || '•'} ${text}`;
+    log.prepend(entry);
+    // Keep max 50 entries
+    while (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+/* ═══════════════════════ PLAYER LIST PANEL ═══════════════════════ */
+function updatePlayerList() {
+    const list = document.getElementById('player-list');
+    list.innerHTML = '';
+    for (const [name, char] of characters) {
+        if (char.team !== 'standard') continue;
+        const el = document.createElement('div');
+        el.className = 'player-entry';
+        el.innerHTML = `<span class="player-dot standard"></span><strong>${esc(String(char.num))}</strong> ${esc(char.name)} <small style="color:#888">(${esc(char.posRole)})</small>`;
+        list.appendChild(el);
+    }
+}
+
+/* ═══════════════════════ SCORE UPDATE ═══════════════════════ */
+function updateScore() {
+    document.getElementById('score-std').textContent = scoreStandard;
+    document.getElementById('score-and').textContent = scoreAnderlecht;
+}
+
+function flashGoal(scorerName) {
+    const el = document.getElementById('goal-flash');
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2600);
+    // Bounce the Standard score
+    const scoreEl = document.getElementById('score-std');
+    scoreEl.classList.remove('score-bump');
+    void scoreEl.offsetWidth;  // force reflow
+    scoreEl.classList.add('score-bump');
+    setTimeout(() => scoreEl.classList.remove('score-bump'), 800);
+}
+
+/* ═══════════════════════ EVENT HANDLING ═══════════════════════ */
+function handleEvent(evt) {
+    const { type, name, message, action, role, scorer } = evt;
+
+    switch (type) {
+        case 'join': {
+            if (characters.has(name)) break;
+            // Find roster info or create generic
+            let data = STANDARD_ROSTER.find(r => r.name === name);
+            let idx;
+            if (data) {
+                idx = STANDARD_ROSTER.indexOf(data) % 11;
+            } else {
+                data = { name, num: 30 + nextStdIndex, pos: 'CM' };
+                idx = nextStdIndex % 11;
+            }
+            nextStdIndex++;
+            createPlayer('standard', data, idx);
+            logEvent('join', `<strong>${esc(name)}</strong> entre sur le terrain ! 🏃`);
+            updatePlayerList();
+            if (!matchRunning) {
+                matchRunning = true;
+                matchStartTime = performance.now();
+                document.getElementById('match-phase').textContent = 'En jeu';
+                logEvent('info', 'Coup d\'envoi ! ⚽');
+            }
+            break;
+        }
+
+        case 'leave': {
+            const char = characters.get(name);
+            if (!char || char.team !== 'standard') break;
+            char.state = 'leaving';
+            char.targetPos = TUNNEL_POS.clone();
+            logEvent('leave', `<strong>${esc(name)}</strong> quitte le terrain 👏`);
+            break;
+        }
+
+        case 'chat': {
+            const char = characters.get(name);
+            if (char) showBubble(char, message);
+            logEvent('chat', `<strong>${esc(name)}</strong> : "${esc(message)}"`);
+            break;
+        }
+
+        case 'action': {
+            const char = characters.get(name);
+            if (!char) break;
+            activeBallHolder = char;
+            ballState.holder = char;
+            ballState.inFlight = false;
+            ball.position.set(char.group.position.x + 0.3, 0.22, char.group.position.z);
+            logEvent('action', `<strong>${esc(name)}</strong> ${esc(action || 'prend le ballon')}`);
+            char.celebrating = true;
+            char.celebrateEnd = performance.now() + 800;
+            break;
+        }
+
+        case 'goal': {
+            const scorerName = scorer || name || 'Standard';
+            scoreStandard++;
+            updateScore();
+            flashGoal(scorerName);
+            logEvent('goal', `<strong>BUUUUT !</strong> ${esc(scorerName)} marque ! Standard ${scoreStandard} - ${scoreAnderlecht} Anderlecht`);
+
+            // Scorer celebrates
+            const scorerChar = characters.get(scorerName);
+            if (scorerChar) {
+                scorerChar.celebrating = true;
+                scorerChar.celebrateEnd = performance.now() + 3000;
+            }
+
+            // Random Anderlecht player falls in despair
+            const andPlayers = [...characters.values()].filter(c => c.team === 'anderlecht' && !c.fallen);
+            if (andPlayers.length > 0) {
+                const victim = andPlayers[Math.floor(Math.random() * andPlayers.length)];
+                victim.fallen = true;
+                victim.fallenEnd = performance.now() + 4000;
+                showBubble(victim, ['Non...', 'Pas encore...', 'Pfff...', 'C\'est pas vrai...'][Math.floor(Math.random() * 4)]);
+            }
+
+            // Ball to center + reset ball state
+            ball.position.set(0, 0.22, 0);
+            activeBallHolder = null;
+            ballState.holder = null;
+            ballState.inFlight = false;
+            ballState.target = null;
+            break;
+        }
+
+        case 'kickoff': {
+            matchRunning = true;
+            matchStartTime = performance.now();
+            matchMinute = 0;
+            document.getElementById('match-phase').textContent = 'En jeu';
+            logEvent('info', '⚽ Coup d\'envoi !');
+            break;
+        }
+
+        case 'halftime': {
+            document.getElementById('match-phase').textContent = 'Mi-temps';
+            logEvent('info', '⏱️ Mi-temps ! Standard mène ' + scoreStandard + ' - ' + scoreAnderlecht);
+            break;
+        }
+
+        case 'fulltime': {
+            matchRunning = false;
+            document.getElementById('match-phase').textContent = 'Terminé';
+            logEvent('info', '🏆 Coup de sifflet final ! Standard ' + scoreStandard + ' - ' + scoreAnderlecht + ' Anderlecht');
+            // All Standard celebrate
+            for (const [, char] of characters) {
+                if (char.team === 'standard') {
+                    char.celebrating = true;
+                    char.celebrateEnd = performance.now() + 10000;
+                }
+            }
+            break;
+        }
+
+        case 'play': {
+            // Live mode: server sends choreography steps
+            if (evt.steps && evt.steps.length > 0) {
+                queuePlay(evt.steps);
+                if (!currentPlay) startPlaySystem();
+            }
+            break;
+        }
+    }
+}
+
+/* ═══════════════════════ DEMO MODE ═══════════════════════ */
+function buildDemoPlays() {
+    // ── Phase 1: All 11 Standard enter (roster order = correct formation slots) ──
+    queuePlay([
+        { type: 'join', player: 'Bodart', duration: 0.3 },
+        { type: 'join', player: 'Siquet', duration: 0.3 },
+        { type: 'join', player: 'Dussenne', duration: 0.3 },
+        { type: 'join', player: 'Laifis', duration: 0.3 },
+        { type: 'join', player: 'Gavory', duration: 0.3 },
+        { type: 'join', player: 'Raskin', duration: 0.3 },
+        { type: 'join', player: 'Witsel', duration: 0.3 },
+        { type: 'join', player: 'Carcela', duration: 0.3 },
+        { type: 'join', player: 'Amallah', duration: 0.3 },
+        { type: 'join', player: 'Emond', duration: 0.3 },
+        { type: 'join', player: 'Mpoku', duration: 0.3 },
+        { type: 'kickoff' },
+        { type: 'wait', duration: 4 },
+        { type: 'chat', player: 'Witsel', message: 'Sprint planning ! Ticket CALC-001 : créer une calculatrice !' },
+        { type: 'wait', duration: 1.5 },
+    ]);
+
+    // ── But 1: Emond (contre-attaque via aile gauche) ──
+    queuePlay([
+        { type: 'move', player: 'Emond', target: [0, 9], speed: 5 },
+        { type: 'dribble', player: 'Witsel', target: [2, 0], speed: 4 },
+        { type: 'chat', player: 'Witsel', message: '`mkdir src/` — Je structure le projet !' },
+        { type: 'pass', from: 'Witsel', to: 'Carcela', power: 14 },
+        { type: 'dribble', player: 'Carcela', target: [-7, 7], speed: 4.5 },
+        { type: 'chat', player: 'Carcela', message: '`touch Calculator.js` — Je crée le fichier !' },
+        { type: 'lob', from: 'Carcela', to: 'Emond', power: 10, arc: 3 },
+        { type: 'shoot', player: 'Emond', power: 18, arc: 1.2, targetX: 2 },
+        { type: 'chat', player: 'Emond', message: '`module.exports = Calculator` — FIRST COMMIT !', duration: 1 },
+        { type: 'wait', duration: 3 },
+    ]);
+
+    // ── But 2: Mpoku (frappe de loin après tacle SAUVAGE de Witsel sur Wasil) ──
+    queuePlay([
+        { type: 'chat', player: 'Witsel', message: 'Code review du code de Wasil... 🤮', duration: 2 },
+        { type: 'move', player: 'Witsel', target: [0, 4], speed: 5 },
+        { type: 'tackle', player: 'Witsel', victim: 'Wasil', brutal: true },
+        { type: 'wait', duration: 2.5 },
+        { type: 'chat', player: 'Witsel', message: '`rm -rf wasil/` — Refactoré.' },
+        { type: 'pass', from: 'Witsel', to: 'Mpoku', power: 14 },
+        { type: 'dribble', player: 'Mpoku', target: [-3, 5], speed: 4 },
+        { type: 'chat', player: 'Mpoku', message: '`git push --force origin main` 🚀' },
+        { type: 'shoot', player: 'Mpoku', power: 22, arc: 2.5, targetX: -1.5 },
+        { type: 'chat', player: 'Mpoku', message: 'BOOOM ! Pipeline CI/CD : ALL GREEN !', duration: 1 },
+        { type: 'wait', duration: 3 },
+    ]);
+
+    // ── But 3: Witsel (combinaison avec Siquet) ──
+    queuePlay([
+        { type: 'move', player: 'Witsel', target: [3, 3], speed: 4 },
+        { type: 'pickup', player: 'Siquet' },
+        { type: 'chat', player: 'Siquet', message: '`function add(a, b)` — Je code l\'addition !' },
+        { type: 'dribble', player: 'Siquet', target: [8, 7], speed: 5 },
+        { type: 'pass', from: 'Siquet', to: 'Witsel', power: 12 },
+        { type: 'dribble', player: 'Witsel', target: [2, 11], speed: 4.5 },
+        { type: 'shoot', player: 'Witsel', power: 16, arc: 1, targetX: -2 },
+        { type: 'chat', player: 'Witsel', message: '`npm test -- --coverage` : 100% !', duration: 1 },
+        { type: 'wait', duration: 2 },
+    ]);
+
+    // ── Mi-temps ──
+    queuePlay([
+        { type: 'halftime', duration: 3 },
+        { type: 'chat', player: 'Witsel', message: '3-0 ! Code coverage aussi : 100% !' },
+        { type: 'wait', duration: 2 },
+    ]);
+
+    // ── But 4: Defour (lob légendaire depuis le rond central) ──
+    queuePlay([
+        { type: 'join', player: 'Defour', duration: 1.5 },
+        { type: 'chat', player: 'Defour', message: '`import { legend } from \'./defour\'` — Je suis là !' },
+        { type: 'move', player: 'Defour', target: [0, -2], speed: 3 },
+        { type: 'pickup', player: 'Raskin' },
+        { type: 'pass', from: 'Raskin', to: 'Defour', power: 12 },
+        { type: 'dribble', player: 'Defour', target: [0, 2], speed: 3 },
+        { type: 'chat', player: 'Defour', message: '`throw new ParabolicShot()` — Regardez...' },
+        { type: 'shoot', player: 'Defour', power: 12, arc: 5, targetX: 0.5, targetH: 1.5 },
+        { type: 'chat', player: 'Carcela', message: 'Quel commit ! `git log --oneline` : magnifique !' },
+        { type: 'wait', duration: 2 },
+        { type: 'leave', player: 'Defour', duration: 2 },
+        { type: 'wait', duration: 1 },
+    ]);
+
+    // ── But 5: Emond (slalom à travers la défense) ──
+    queuePlay([
+        { type: 'move', player: 'Emond', target: [0, 2], speed: 4 },
+        { type: 'pickup', player: 'Emond' },
+        { type: 'chat', player: 'Emond', message: '`while (!goal) { dribble(defender++) }` 🔄' },
+        { type: 'dribble', player: 'Emond', target: [-3, 6], speed: 4.5 },
+        { type: 'dribble', player: 'Emond', target: [3, 9], speed: 5 },
+        { type: 'dribble', player: 'Emond', target: [-2, 12], speed: 5 },
+        { type: 'shoot', player: 'Emond', power: 16, arc: 0.8, targetX: 2.5 },
+        { type: 'chat', player: 'Emond', message: '`assert.equal(goals, 2)` — PASS ! Doublé !', duration: 1 },
+        { type: 'wait', duration: 3 },
+    ]);
+
+    // ── But 6: Van Buyten (tête sur corner) ──
+    queuePlay([
+        { type: 'join', player: 'Van Buyten', duration: 1.5 },
+        { type: 'chat', player: 'Van Buyten', message: '`sudo apt-get install van-buyten` 🏗️' },
+        { type: 'move', player: 'Van Buyten', target: [0, 12], speed: 4 },
+        { type: 'move', player: 'Carcela', target: [10, 14.5], speed: 5 },
+        { type: 'pickup', player: 'Carcela' },
+        { type: 'lob', from: 'Carcela', to: 'Van Buyten', power: 8, arc: 4 },
+        { type: 'header', player: 'Van Buyten', power: 14, arc: 0.5, targetX: 1 },
+        { type: 'chat', player: 'Van Buyten', message: '`HEAD /api/goal` — 200 OK ! 🤯' },
+        { type: 'wait', duration: 3 },
+    ]);
+
+    // ── Coup de sifflet final ──
+    queuePlay([
+        { type: 'fulltime' },
+        { type: 'wait', duration: 2 },
+        { type: 'chat', player: 'Witsel', message: '`DROP TABLE anderlecht;` — 6-0 ! STANDARD CHAMPION !' },
+    ]);
+}
+
+function startDemo() {
+    stopDemo();
+    demoRunning = true;
+    document.getElementById('btn-demo').classList.add('active');
+    buildDemoPlays();
+    startPlaySystem();
+}
+
+function stopDemo() {
+    demoRunning = false;
+    document.getElementById('btn-demo').classList.remove('active');
+    for (const t of demoTimeouts) clearTimeout(t);
+    demoTimeouts = [];
+    // Clear play system
+    playQueue = [];
+    currentPlay = null;
+    currentStepIdx = 0;
+    stepActive = false;
+    stepState = {};
+}
+
+function resetMatch() {
+    stopDemo();
+    // Clear ball state
+    ballState.holder = null;
+    ballState.inFlight = false;
+    ballState.target = null;
+    ballState.startPos = null;
+    ballState.onArrive = null;
+    // Clear flying parts
+    for (const fp of flyingParts) scene.remove(fp.mesh);
+    flyingParts.length = 0;
+    // Remove all Standard players
+    for (const [name, char] of [...characters.entries()]) {
+        if (char.team === 'standard') {
+            scene.remove(char.group);
+            characters.delete(name);
+        }
+    }
+    // Reset Anderlecht to positions
+    for (const [, char] of characters) {
+        if (char.team === 'anderlecht') {
+            char.fallen = false;
+            char.celebrating = false;
+            char.kicking = false;
+            char.sliding = false;
+            char.heading = false;
+            char.state = 'idle';
+            char.group.rotation.set(0, 0, 0);
+            char.body.rotation.set(0, 0, 0);
+            const pos = getFormationPosition(char.formationIndex, 'anderlecht');
+            char.group.position.copy(pos);
+        }
+    }
+    scoreStandard = 0;
+    scoreAnderlecht = 0;
+    nextStdIndex = 0;
+    matchRunning = false;
+    matchMinute = 0;
+    activeBallHolder = null;
+    ball.position.set(0, 0.22, 0);
+    updateScore();
+    updatePlayerList();
+    document.getElementById('commentary-log').innerHTML = '';
+    document.getElementById('match-phase').textContent = 'Avant-match';
+    document.getElementById('chrono').textContent = '00:00';
+}
+
+/* Expose to window for onclick */
+window.startDemo = startDemo;
+window.stopDemo = stopDemo;
+window.resetMatch = resetMatch;
+window.toggleCommentary = toggleCommentary;
+
+/* ═══════════════════════ WEBSOCKET ═══════════════════════ */
+const params = new URLSearchParams(window.location.search);
+
+function connectWS(url, label) {
+    const fullUrl = url.startsWith('ws') ? url : `ws://${url}`;
+    const ws = new WebSocket(fullUrl);
+    ws.onopen = () => {
+        document.getElementById('ws-dot').classList.add('on');
+        document.getElementById('ws-label').textContent = label;
+        logEvent('info', `Connecté à ${label}`);
+    };
+    ws.onmessage = (e) => {
+        try { handleEvent(JSON.parse(e.data)); }
+        catch (err) { console.warn('Invalid WS message:', e.data); }
+    };
+    ws.onclose = () => {
+        document.getElementById('ws-dot').classList.remove('on');
+        document.getElementById('ws-label').textContent = 'Reconnecting...';
+        setTimeout(() => connectWS(url, label), 3000);
+    };
+    ws.onerror = () => ws.close();
+}
+
+if (params.get('ws')) {
+    const wsHost = params.get('ws');
+    // Security: only allow localhost connections
+    if (/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(wsHost) || /^ws:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(wsHost)) {
+        connectWS(wsHost, 'WS: ' + wsHost);
+    } else {
+        logEvent('info', 'WebSocket bloqué : seul localhost est autorisé');
+    }
+} else if (params.has('bridge') || params.get('bridge')) {
+    const port = params.get('bridge') || '3333';
+    connectWS(`127.0.0.1:${port}`, `Bridge :${port}`);
+}
+
+/* ═══════════════════════ ANIMATION LOOP ═══════════════════════ */
+function animate() {
+    requestAnimationFrame(animate);
+    const delta = clock.getDelta();
+    const elapsed = clock.getElapsedTime();
+    const now = performance.now();
+
+    controls.update();
+
+    // Update match chrono
+    if (matchRunning) {
+        matchMinute = Math.floor((now - matchStartTime) / 2000);  // 2s = 1 min de match
+        const displayMin = String(Math.min(matchMinute, 90)).padStart(2, '0');
+        const sec = String(Math.floor(((now - matchStartTime) % 2000) / 33.3) % 60).padStart(2, '0');
+        document.getElementById('chrono').textContent = `${displayMin}:${sec}`;
+    }
+
+    // Update characters
+    for (const [name, char] of characters) {
+        const pos = char.group.position;
+
+        // ── Movement towards target ──
+        if (char.targetPos && (char.state === 'entering' || char.state === 'leaving' || char.state === 'moving')) {
+            const dx = char.targetPos.x - pos.x;
+            const dz = char.targetPos.z - pos.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+
+            if (dist < 0.1) {
+                // Arrived
+                if (char.state === 'entering') {
+                    char.state = 'idle';
+                    char.targetPos = null;
+                } else if (char.state === 'leaving') {
+                    scene.remove(char.group);
+                    characters.delete(name);
+                    updatePlayerList();
+                    continue;
+                } else {
+                    char.state = 'idle';
+                    char.targetPos = null;
+                }
+            } else {
+                const step = Math.min(char.walkSpeed * delta, dist);
+                pos.x += (dx / dist) * step;
+                pos.z += (dz / dist) * step;
+
+                // Face direction
+                char.group.rotation.y = Math.atan2(dx, dz);
+
+                // Walk bob
+                const walkCycle = Math.sin(elapsed * 11 + char.walkPhase);
+                pos.y = Math.abs(walkCycle) * 0.04;
+                char.body.rotation.z = walkCycle * 0.07;
+            }
+        }
+
+        // ── Fallen state (Anderlecht after goal) ──
+        else if (char.fallen && now < char.fallenEnd) {
+            char.group.rotation.z = Math.PI / 2 * 0.7;
+            pos.y = 0;
+        } else if (char.fallen && now >= char.fallenEnd) {
+            char.fallen = false;
+            char.group.rotation.z = 0;
+        }
+
+        // ── Celebration (Standard after goal) ──
+        else if (char.celebrating && now < char.celebrateEnd) {
+            pos.y = Math.abs(Math.sin(elapsed * 8)) * 0.6;
+            char.group.rotation.y += delta * 6;
+        } else if (char.celebrating && now >= char.celebrateEnd) {
+            char.celebrating = false;
+            pos.y = 0;
+        }
+
+        // ── Idle behaviors ──
+        else if (char.state === 'idle') {
+            if (char.team === 'anderlecht') {
+                // Anderlecht NPCs — idiotic idle behaviors
+                const t = elapsed + char.walkPhase;
+                switch (char.idle) {
+                    case 'stargazing':
+                        // GK looks up at the sky
+                        char.head.rotation.x = -0.4 + Math.sin(t * 0.5) * 0.1;
+                        pos.y = Math.sin(t * 0.3) * 0.02;
+                        break;
+                    case 'tripping':
+                        // Stumbles periodically
+                        if (Math.sin(t * 1.5) > 0.95) {
+                            char.group.rotation.z = Math.sin(t * 3) * 0.4;
+                            pos.y = Math.max(0, Math.sin(t * 3) * -0.15);
+                        } else {
+                            char.group.rotation.z *= 0.95;
+                            pos.y *= 0.9;
+                        }
+                        break;
+                    case 'slow':
+                        // Moves incredibly slowly in place
+                        pos.x += Math.sin(t * 0.2) * 0.001;
+                        char.body.rotation.z = Math.sin(t * 0.5) * 0.02;
+                        break;
+                    case 'circles':
+                        // Kompany turns in circles, confused
+                        char.group.rotation.y += delta * 0.8;
+                        pos.y = Math.sin(t * 2) * 0.02;
+                        break;
+                    case 'confused':
+                        // Looks left and right frantically
+                        char.group.rotation.y = Math.sin(t * 2) * 0.8;
+                        char.head.rotation.y = Math.sin(t * 3) * 0.3;
+                        break;
+                    case 'buggy':
+                        // Wasil's code has bugs, he glitches around
+                        if (Math.random() < 0.01) pos.x += (Math.random() - 0.5) * 0.5;
+                        char.body.rotation.z = Math.sin(t * 4) * 0.06;
+                        char.head.rotation.y = Math.sin(t * 2) * 0.3;
+                        break;
+                    case 'nervous':
+                        // Jittery small movements
+                        pos.x += (Math.random() - 0.5) * 0.005;
+                        pos.z += (Math.random() - 0.5) * 0.005;
+                        char.body.rotation.z = Math.sin(t * 8) * 0.03;
+                        break;
+                    case 'old':
+                        // Slow, hunched
+                        char.body.rotation.x = 0.1;
+                        pos.y = Math.sin(t * 0.8) * 0.01;
+                        break;
+                    case 'daydream':
+                        // Sways gently, not paying attention
+                        char.group.rotation.y = Math.sin(t * 0.4) * 0.3 + Math.PI;
+                        char.head.rotation.x = -0.15;
+                        break;
+                    case 'posing':
+                        // Zirkzee poses for cameras
+                        char.group.rotation.y = Math.sin(t * 0.6) * 1.2;
+                        if (Math.sin(t * 0.8) > 0.7) pos.y = 0.05;
+                        else pos.y = 0;
+                        break;
+                    default:
+                        char.head.position.y = 0.95 + Math.sin(t * 1.2) * 0.004;
+                }
+            } else {
+                // Standard — focused idle
+                const t = elapsed + char.walkPhase;
+                char.head.position.y = 0.95 + Math.sin(t * 1.5) * 0.005;
+                pos.y = Math.abs(Math.sin(t * 2)) * 0.015;
+                // Slight bounce, ready to play
+            }
+        }
+
+        // ── Kick animation overlay ──
+        if (char.kicking && now < char.kickEnd) {
+            char.body.rotation.x = -0.3;
+        } else if (char.kicking) {
+            char.kicking = false;
+            char.body.rotation.x = 0;
+        }
+
+        // ── Slide tackle overlay ──
+        if (char.sliding && now < char.slideEnd) {
+            const t = (now - char.slideStart) / 800;
+            pos.y = Math.max(0, 0.15 * (1 - t));
+            char.body.rotation.x = Math.PI / 3;
+            char.group.rotation.z = 0.3;
+        } else if (char.sliding) {
+            char.sliding = false;
+            char.body.rotation.x = 0;
+            char.group.rotation.z = 0;
+            pos.y = 0;
+        }
+
+        // ── Header jump overlay ──
+        if (char.heading && now < char.headerEnd) {
+            const t = (now - char.headerStart) / 600;
+            pos.y = Math.sin(t * Math.PI) * 0.8;
+        } else if (char.heading) {
+            char.heading = false;
+            pos.y = 0;
+        }
+    }
+
+    // ── Ball physics ──
+    updateBall(delta);
+
+    // ── Play choreography ──
+    updatePlay(delta);
+
+    // ── Flying parts (legs etc.) ──
+    for (let i = flyingParts.length - 1; i >= 0; i--) {
+        const fp = flyingParts[i];
+        fp.vel.y -= 15 * delta;  // gravity
+        fp.mesh.position.x += fp.vel.x * delta;
+        fp.mesh.position.y += fp.vel.y * delta;
+        fp.mesh.position.z += fp.vel.z * delta;
+        fp.mesh.rotation.x += fp.rotVel.x * delta;
+        fp.mesh.rotation.y += fp.rotVel.y * delta;
+        fp.mesh.rotation.z += fp.rotVel.z * delta;
+        fp.life -= delta;
+        if (fp.life <= 0 || fp.mesh.position.y < -2) {
+            scene.remove(fp.mesh);
+            flyingParts.splice(i, 1);
+        }
+    }
+
+    // ── Supporter wave (Standard stands) ──
+    if (standStdMain.supporterMesh) {
+        const mesh = standStdMain.supporterMesh;
+        const dummy = new THREE.Object3D();
+        const count = standStdMain.supporterCount;
+        for (let i = 0; i < count; i++) {
+            mesh.getMatrixAt(i, dummy.matrix);
+            dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
+            dummy.position.y += Math.sin(elapsed * 3 + i * 0.5) * 0.003;
+            dummy.updateMatrix();
+            mesh.setMatrixAt(i, dummy.matrix);
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+    }
+
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+}
+
+animate();
+
+// Log initial state
+logEvent('info', 'Bienvenue au CLASICO ! Standard de Liège vs RSC Anderlecht');
+logEvent('info', 'Anderlecht est déjà sur le terrain... ils n\'ont pas l\'air prêts 😂');
+
+</script>
+</body>
+</html>
